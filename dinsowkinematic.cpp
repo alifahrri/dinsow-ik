@@ -1,7 +1,7 @@
 #include "dinsowkinematic.h"
 
 #define DEBUG
-#define TEST
+#define TEST_CHAIN
 
 #ifdef DEBUG
 #include <iostream>
@@ -82,6 +82,42 @@ DinsowKinematic::DinsowKinematic()
     auto j1 = test_fk({1.54,0.0,0.0,0.0,0.0,0.0});
     auto p1 = test_ik(j1,{0.0,0.0,0.0,0.0,0.0,0.0});
 #endif
+
+#ifdef TEST_CHAIN
+    auto test_fk = [&](std::vector<double> j, ArmSelect_t arm)->std::vector<double>
+    {
+        if(j.size() != 6)
+            return std::vector<double>();
+        JointValues<6> joint({j[0], j[1], j[2], j[3], j[4], j[5]});
+        auto ef = forwardKinematic(joint, arm);
+        std::cout << "[forward kinematics] " << (arm==LEFT? "left" : "right") << '\n'
+                  << joint.str() << "; "
+                  << ef.str() << '\n';
+        return std::vector<double>({ef.x,ef.y,ef.z,ef.rx,ef.ry,ef.rz});
+    };
+    auto test_ik = [&](std::vector<double> p, ArmSelect_t arm)->std::vector<double>
+    {
+        if(p.size()!=6)
+            return std::vector<double>();
+        Pose pose({p.at(0),p.at(1),p.at(2),
+                p.at(3),p.at(4),p.at(5)});
+        auto joints = inverseKinematic(pose,arm);
+        std::cout << "[inverse kinematics] " << (arm==LEFT? "left" : "right") << '\n'
+                  << pose.str() << "; "
+                  << joints.str() << '\n';
+        return std::vector<double>({joints.q[0], joints.q[1], joints.q[2],
+                                    joints.q[3], joints.q[4], joints.q[5]});
+    };
+
+    auto v0 = std::vector<double>({0.0,0.0,0.0,0.0,0.0,0.0});
+    auto v1 = std::vector<double>({1.54,0.0,0.0,0.0,0.0,0.0});
+    auto j0 = test_fk(v0,LEFT);
+    auto p0 = test_ik(j0,LEFT);
+    auto rj0 = test_fk(v0,RIGHT);
+    auto rp0 = test_ik(rj0,RIGHT);
+//    auto j1 = test_fk(v1);
+//    auto p1 = test_ik(j1,v0);
+#endif
 }
 
 DinsowKinematic::Pose DinsowKinematic::forwardKinematic(const DinsowKinematic::ArmJoints &q, DinsowKinematic::ArmSelect_t arm)
@@ -153,7 +189,7 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
     for(int i=0; i<n; i++)
         in_q(i) = init_q.q[i];
     KDL::Frame in_frame(Vector(p.x,p.y,p.z));
-    auto err = lhand_ik_pos->CartToJnt(in_q,in_frame,out_q);
+    auto err = chain.ikpos_solver->CartToJnt(in_q,in_frame,out_q);
     for(int i=0; i<n; i++)
         joints.q[i] = out_q(i);
     chain.joint = joints;

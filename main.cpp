@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(dinsowbody);
     DinsowKinematic dinsow_kinematic;
     MainWindow w;
+    w.getWidget3D()->passKinematic(&dinsow_kinematic);
     w.showMaximized();
 
     return a.exec();

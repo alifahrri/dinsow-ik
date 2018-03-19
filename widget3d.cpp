@@ -12,6 +12,11 @@ QWidget *Widget3D::getContainer()
     return container;
 }
 
+void Widget3D::passKinematic(DinsowKinematic *dinsow)
+{
+    modifier->setDinsow(dinsow);
+}
+
 inline
 void Widget3D::init()
 {
@@ -38,25 +43,6 @@ void Widget3D::init()
     lightTransform2->setTranslation(cameraEntity->position()-QVector3D(0.0,0.0,40.0));
     lightEntity2->addComponent(lightTransform2);
 
-//    light3->setColor("white");
-//    light3->setIntensity(0.5);
-//    lightEntity3->addComponent(light3);
-//    lightTransform3->setTranslation(QVector3D(-40.0,0.0,0.0));
-//    lightEntity3->addComponent(lightTransform3);
-
-//    light4->setColor("white");
-//    light4->setIntensity(0.5);
-//    lightEntity4->addComponent(light4);
-//    lightTransform4->setTranslation(QVector3D(40.0,0.0,0.0));
-//    lightEntity4->addComponent(lightTransform4);
-
-//    light5->setColor("white");
-//    light5->setIntensity(0.5);
-//    lightEntity5->addComponent(light5);
-//    lightTransform5->setTranslation(QVector3D(0.0,40.0,0.0));
-//    lightEntity5->addComponent(lightTransform5);
-
-//    camController->setCamera(cameraEntity);
     orbitalCamController->setCamera(cameraEntity);
     orbitalCamController->setLookSpeed(2000.0);
     orbitalCamController->setLinearSpeed(10.0);

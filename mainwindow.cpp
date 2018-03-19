@@ -18,9 +18,20 @@ MainWindow::MainWindow(QWidget *parent) :
         widget3d->modifier->applyFK(joints,finger_joints);
     });
 
+    connect(joint_dialog,&JointSettingsDialog::leftIkRequest,[=]
+    {
+        auto frame = joint_dialog->leftArmIk();
+        widget3d->modifier->dinsowIK(frame);
+    });
+
     setWindowTitle("Widget3D");
 
     joint_dialog->show();
+}
+
+Widget3D *MainWindow::getWidget3D()
+{
+    return widget3d;
 }
 
 MainWindow::~MainWindow()

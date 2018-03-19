@@ -15,6 +15,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
+    Widget3D *getWidget3D();
     ~MainWindow();
 
 private:

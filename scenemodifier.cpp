@@ -1,8 +1,12 @@
 #include "scenemodifier.h"
 #include "dinsowkinematic.h"
 
+#define TO_DEG (180.0/M_PI)
+#define TEST
+
 SceneModifier::SceneModifier(Qt3DCore::QEntity *_rootEntity)
-    : rootEntity(_rootEntity)
+    : rootEntity(_rootEntity),
+      dinsow(nullptr)
 {
     initScene();
     applyFK({0.0,0.0,0.0,0.0,0.0,0.0,0.0,
@@ -27,6 +31,7 @@ void SceneModifier::initScene()
     handRelativePos.resize(22);
     handLinkRelativePos.resize(22);
 
+    //left joint
     relativePos[0] = QVector3D(1.0,2.5,0.0);
     relativePos[1] = QVector3D(1.0,0.0,0.0);
     relativePos[2] = QVector3D(0.0,0.0,0.0);
@@ -35,6 +40,7 @@ void SceneModifier::initScene()
     relativePos[5] = QVector3D(0.0,-2.0,0.0);
     relativePos[6] = QVector3D(0.0,0.0,0.0);
 
+    //right joint
     relativePos[7] = QVector3D(-1.75,2.5,0.0);
     relativePos[8] = QVector3D(-1.0,0.0,0.0);
     relativePos[9] = QVector3D(0.0,0.0,0.0);
@@ -95,7 +101,6 @@ void SceneModifier::initScene()
     dinsow_head->transform->setTranslation(QVector3D(-2.55,-0.5,1.5));
 
     dinsow_base = new MeshEntity(rootEntity,QUrl("qrc:/mesh/dinsow_base.OBJ"),QColor(Qt::white),0.015);
-//    dinsow_base->transform->setRotationX(0.0);
     dinsow_base->transform->setTranslation(QVector3D(-0.3,-9.25,0.15));
 
     joint[0] = new JointEntity(rootEntity);
@@ -158,32 +163,6 @@ void SceneModifier::initScene()
                 hand_joint[i]->transform->setMatrix(tf_joint[i].matrix());
             }
         }
-
-//        tf_joint[0].setMatrix(joint.back()->transform->matrix()*mat[0]);
-//        hand_joint[0]->transform->setMatrix(tf_joint[0].matrix());
-//        tf_joint[1].setMatrix(hand_joint[0]->transform->matrix()*mat[1]);
-//        hand_joint[1]->transform->setMatrix(tf_joint[1].matrix());
-
-//        tf_joint[2].setMatrix(joint.back()->transform->matrix()*mat[2]);
-//        hand_joint[2]->transform->setMatrix(tf_joint[2].matrix());
-//        tf_joint[3].setMatrix(hand_joint[2]->transform->matrix()*mat[3]);
-//        hand_joint[3]->transform->setMatrix(tf_joint[3].matrix());
-//        tf_joint[4].setMatrix(hand_joint[3]->transform->matrix()*mat[4]);
-//        hand_joint[4]->transform->setMatrix(tf_joint[4].matrix());
-
-//        tf_joint[5].setMatrix(joint.back()->transform->matrix()*mat[5]);
-//        hand_joint[5]->transform->setMatrix(tf_joint[5].matrix());
-//        tf_joint[6].setMatrix(hand_joint[5]->transform->matrix()*mat[6]);
-//        hand_joint[6]->transform->setMatrix(tf_joint[6].matrix());
-//        tf_joint[7].setMatrix(hand_joint[6]->transform->matrix()*mat[7]);
-//        hand_joint[7]->transform->setMatrix(tf_joint[7].matrix());
-
-//        tf_joint[8].setMatrix(joint.back()->transform->matrix()*mat[8]);
-//        hand_joint[8]->transform->setMatrix(tf_joint[8].matrix());
-//        tf_joint[9].setMatrix(hand_joint[8]->transform->matrix()*mat[9]);
-//        hand_joint[9]->transform->setMatrix(tf_joint[9].matrix());
-//        tf_joint[10].setMatrix(hand_joint[9]->transform->matrix()*mat[10]);
-//        hand_joint[10]->transform->setMatrix(tf_joint[10].matrix());
     }
 
     link[0] = new LinkEntity(LinkEntity::CYLINDER,rootEntity,{0.5,1.5});
@@ -210,35 +189,12 @@ void SceneModifier::initScene()
         hand_link[i] = new LinkEntity(LinkEntity::CUBOID,rootEntity,{0.1,0.3,0.1});
 
     applyFK({0.0,0.0,0.0,0.0,0.0,0.0,0.0});
-
-//    auto tf = joint[1]->transform->translation();
-//    tf += linkRelativePos[1];
-//    link[1]->transform->setTranslation(tf);
-
-//    auto tf2 = joint[2]->transform->translation();
-//    tf2 += linkRelativePos[2];
-//    link[2]->transform->setTranslation(tf2);
-
-//    auto tf3 = joint[3]->transform->translation();
-//    tf3 += linkRelativePos[3];
-//    link[3]->transform->setTranslation(tf3);
-
-//    auto tf4 = joint[4]->transform->translation();
-//    tf4 += linkRelativePos[4];
-//    link[4]->transform->setTranslation(tf4);
-
-//    auto tf5 = joint[5]->transform->translation();
-//    tf5 += linkRelativePos[5];
-//    link[5]->transform->setTranslation(tf5);
-
 }
 
 void SceneModifier::moveLink()
 {
     for(int i=1; i<7; i++)
     {
-//        auto mat = joint[i]->transform->matrix();
-//        tf += linkRelativePos[i];
         QMatrix4x4 mat;
         mat.translate(linkRelativePos[i]);
         link[i]->transform->setMatrix(joint[i]->transform->matrix()*mat);
@@ -265,7 +221,6 @@ void SceneModifier::applyFK(QVector<double> q, QVector<double> q_hand)
         return;
     Qt3DCore::QTransform tf[14];
     Qt3DCore::QTransform tf_joint[22];
-//    tf[0].setMatrix((link[0]->transform)->matrix());
     tf[0].setMatrix((joint[0]->transform)->matrix());
     tf[0].setRotationZ(0.0);
     tf[7].setMatrix((joint[7]->transform)->matrix());
@@ -289,6 +244,9 @@ void SceneModifier::applyFK(QVector<double> q, QVector<double> q_hand)
         joint[i]->transform->setMatrix(tf[i].matrix());
     }
 
+    qDebug() << "joint" << 6 << joint[6]->transform->translation() << joint[6]->transform->rotation();
+    qDebug() << "joint" << 13 << joint[13]->transform->translation() << joint[13]->transform->rotation();
+
     if(q_hand.size()!=22)
         goto MOVE_LINK;
     for(int i=0; i<22; i++)
@@ -298,7 +256,6 @@ void SceneModifier::applyFK(QVector<double> q, QVector<double> q_hand)
         mat.rotate(handAngle(q_hand[i],i));
         if(i==0 || i==2 || i==5 || i==8)
         {
-//            tf_joint[i].setMatrix(joint.back()->transform->matrix()*mat);
             tf_joint[i].setMatrix(joint.at(6)->transform->matrix()*mat);
             hand_joint[i]->transform->setMatrix(tf_joint[i].matrix());
         }
@@ -315,6 +272,32 @@ void SceneModifier::applyFK(QVector<double> q, QVector<double> q_hand)
     }
     MOVE_LINK:
     moveLink();
+}
+
+void SceneModifier::setDinsow(DinsowKinematic *kinematic)
+{
+    dinsow = kinematic;
+#ifdef TEST
+    dinsowIK(QVector<double>({0.0,10.0,-20.0,0.0,0.0,0.0}));
+#endif
+}
+
+void SceneModifier::dinsowIK(QVector<double> frame)
+{
+    if(!dinsow)
+        return;
+    auto pose = DinsowKinematic::Pose({frame[0],frame[1],frame[2],
+                                       frame[3],frame[4],frame[5]});
+    auto joints = dinsow->inverseKinematic(pose,DinsowKinematic::LEFT);
+    QVector<double> qjoints, qhands;
+    qjoints.push_back(0.0);
+    for(size_t i=0; i<6; i++)
+        qjoints.push_back(joints.q[i]*TO_DEG);
+    for(size_t i=0; i<7; i++)
+        qjoints.push_back(0.0);
+    for(size_t i=0; i<22; i++)
+        qhands.push_back(0.0);
+    applyFK(qjoints,qhands);
 }
 
 QQuaternion SceneModifier::angle(double q, int idx)

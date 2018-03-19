@@ -17,10 +17,14 @@ public:
     explicit JointSettingsDialog(QWidget *parent = 0);
     QVector<double> jointValues();
     QVector<double> fingerJointValues();
+    QVector<double> leftArmIk();
+    QVector<double> rightArmIk();
     ~JointSettingsDialog();
 
 signals:
     void jointValueChanged();
+    void leftIkRequest();
+    void rightIkRequest();
 
 private:
     Ui::JointSettingsDialog *ui;

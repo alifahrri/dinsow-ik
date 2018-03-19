@@ -1,5 +1,6 @@
 #include "jointsettingsdialog.h"
 #include "ui_jointsettingsdialog.h"
+#include <QDebug>
 
 JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -110,6 +111,22 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
                 finger_slider.at(i)->setValue((int)left_finger.at(i));
         }
     });
+
+    connect(ui->x_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
+    connect(ui->y_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
+    connect(ui->z_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
+    connect(ui->rx_ik_left_dial,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
+    connect(ui->ry_ik_left_dial,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
+    connect(ui->rz_ik_left_dial,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
+
+    connect(ui->x_ik_right_slider,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
+    connect(ui->y_ik_right_slider,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
+    connect(ui->z_ik_right_slider,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
+    connect(ui->rx_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
+    connect(ui->ry_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
+    connect(ui->rz_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
+
+    setWindowTitle("Joint Settings");
 }
 
 QVector<double> JointSettingsDialog::jointValues()
@@ -125,6 +142,32 @@ QVector<double> JointSettingsDialog::fingerJointValues()
     QVector<double> ret;
     ret.append(left_finger);
     ret.append(right_finger);
+    return ret;
+}
+
+QVector<double> JointSettingsDialog::leftArmIk()
+{
+    QVector<double> ret;
+    ret.push_back(ui->z_ik_left_slider->value()/10.0);
+    ret.push_back(ui->x_ik_left_slider->value()/10.0);
+    ret.push_back(ui->y_ik_left_slider->value()/10.0);
+    ret.push_back(ui->rx_ik_left_dial->value()/10.0);
+    ret.push_back(ui->ry_ik_left_dial->value()/10.0);
+    ret.push_back(ui->rz_ik_left_dial->value()/10.0);
+    qDebug() << ret;
+    return ret;
+}
+
+QVector<double> JointSettingsDialog::rightArmIk()
+{
+    QVector<double> ret;
+    ret.push_back(ui->z_ik_right_slider->value()/10.0);
+    ret.push_back(ui->x_ik_right_slider->value()/10.0);
+    ret.push_back(ui->y_ik_right_slider->value()/10.0);
+    ret.push_back(ui->rx_ik_right_dial->value()/10.0);
+    ret.push_back(ui->ry_ik_right_dial->value()/10.0);
+    ret.push_back(ui->rz_ik_right_dial->value()/10.0);
+    qDebug() << ret;
     return ret;
 }
 

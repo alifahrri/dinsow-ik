@@ -26,10 +26,12 @@ class SceneModifier : public QObject
 public:
     explicit SceneModifier(Qt3DCore::QEntity *_rootEntity);
     ~SceneModifier() {}
-    void dinsowFK();
     void applyFK(QVector<double> q, QVector<double> q_hand = QVector<double>());
+    void setDinsow(DinsowKinematic *kinematic);
+    void dinsowIK(QVector<double> frame);
 
 private:
+    void dinsowFK();
     void initScene();
     void moveLink();
     QQuaternion angle(double q, int idx);

@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>mesh/body.STL</file>
+        <file>mesh/head.STL</file>
+        <file>mesh/body.OBJ</file>
+        <file>mesh/head.OBJ</file>
+        <file>mesh/dinsow_base.OBJ</file>
+    </qresource>
+</RCC>

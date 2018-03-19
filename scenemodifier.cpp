@@ -1,4 +1,5 @@
 #include "scenemodifier.h"
+#include "dinsowkinematic.h"
 
 SceneModifier::SceneModifier(Qt3DCore::QEntity *_rootEntity)
     : rootEntity(_rootEntity)

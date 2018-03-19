@@ -37,17 +37,19 @@ public:
         std::string str();
     };
 
-    typedef JointValues<6> ArmJoints;
 
     template <int n>
     struct DinsowChain
     {
         KDL::Chain chain;
-        KDL::ChainFkSolverPos_recursive fk_solver;
-        KDL::ChainIkSolverVel_pinv ikvel_solver;
-        KDL::ChainIkSolverPos_NR ikpos_solver;
+        KDL::ChainFkSolverPos_recursive *fk_solver;
+        KDL::ChainIkSolverVel_pinv *ikvel_solver;
+        KDL::ChainIkSolverPos_NR *ikpos_solver;
         JointValues<n> joint;
     };
+
+    typedef JointValues<6> ArmJoints;
+    typedef DinsowChain<6> DinsowArmChain;
 
 public:
     DinsowKinematic();
@@ -56,12 +58,14 @@ public:
     ArmJoints joints(ArmSelect_t arm);
 
 private:
-    Pose forwardKinematic(const JointValues<6> &q);
-    JointValues<6> inverseKinematic(const Pose &p, const JointValues<6> &init_q);
+    Pose forwardKinematic(const ArmJoints &q, DinsowArmChain &chain);
+    ArmJoints inverseKinematic(const Pose &p, DinsowArmChain &chain);
+    Pose forwardKinematic(const ArmJoints &q);
+    ArmJoints inverseKinematic(const Pose &p, const ArmJoints &init_q);
 
 private:
-    DinsowChain left_arm;
-    DinsowChain right_arm;
+    DinsowArmChain left_arm;
+    DinsowArmChain right_arm;
 
     KDL::Chain lhand_chain;
     KDL::ChainFkSolverPos_recursive *lhand_chain_fk;

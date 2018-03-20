@@ -2,6 +2,7 @@
 
 #define DEBUG
 //#define TEST_CHAIN
+#define USE_ROTATION
 #define USE_LMA
 
 #ifdef DEBUG
@@ -248,8 +249,12 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
     const auto& init_q = chain.joint;
     for(int i=0; i<n; i++)
         in_q(i) = init_q.q[i];
+#ifdef USE_ROTATION
     KDL::Rotation rot = KDL::Rotation::RPY(p.rx,p.ry,p.rz);
     KDL::Frame in_frame(rot,Vector(p.x,p.y,p.z));
+#else
+    KDL::Frame in_frame(Vector(p.x,p.y,p.z));
+#endif
 #ifdef USE_LMA
     chain.ikpos_solver_lma->display_information = true;
     auto err = chain.ikpos_solver_lma->CartToJnt(in_q,in_frame,out_q);
@@ -260,6 +265,10 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
 #endif
     for(int i=0; i<n; i++)
         joints.q[i] = out_q(i);
+#ifndef USE_ROTATION
+    joints.q[4] = p.rx;
+    joints.q[5] = p.ry;
+#endif
     normalize(joints);
     chain.joint = joints;
     return joints;

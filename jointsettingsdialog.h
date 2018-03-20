@@ -23,6 +23,7 @@ public:
 
 signals:
     void ikRequest();
+    void btnIkRequest(QVector<double>);
     void jointValueChanged();
     void leftIkRequest();
     void rightIkRequest();

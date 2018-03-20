@@ -1,6 +1,7 @@
 #include "jointsettingsdialog.h"
 #include "ui_jointsettingsdialog.h"
 #include <QDebug>
+#include <QHeaderView>
 
 JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -141,6 +142,51 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     connect(ui->ry_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
     connect(ui->rz_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
 #endif
+
+    ui->tableWidget->setColumnCount(12);
+
+    QStringList horizontal_header;
+    horizontal_header << "x (left)"     << "y (left)"   << "z (left)"
+                      << "rx (left)"    << "ry (left)"  << "rz (left)"
+                      << "x (right)"     << "y (right)"   << "z (right)"
+                      << "rx (right)"    << "ry (right)"  << "rz (right)";
+    ui->tableWidget->setHorizontalHeaderLabels(horizontal_header);
+    for(size_t i=0; i<12; i++)
+        ui->tableWidget->setColumnWidth(i,65);
+
+    connect(ui->add_btn,&QPushButton::clicked,[=]
+    {
+        auto left_frame = leftArmIk();
+        auto right_frame = rightArmIk();
+        auto& frame = left_frame;
+        frame.append(right_frame);
+        auto row = ui->tableWidget->rowCount();
+        ui->tableWidget->setRowCount(row+1);
+        for(size_t i=0; i<12; i++)
+            ui->tableWidget->setItem(row,i,new QTableWidgetItem(QString::number(frame[i])));
+    });
+
+    connect(ui->set_btn,&QPushButton::clicked,[=]
+    {
+        auto row = ui->tableWidget->currentRow();
+        if(row>=0)
+        {
+            QVector<double> frame;
+            for(int i=0; i<12; i++)
+            {
+                auto value = ui->tableWidget->item(row,i)->data(0).toDouble();
+                frame.push_back(value);
+            }
+            this->btnIkRequest(frame);
+        }
+    });
+
+    connect(ui->remove_btn,&QPushButton::clicked,[=]
+    {
+        auto row = ui->tableWidget->currentRow();
+        if(row>=0)
+            ui->tableWidget->removeRow(row);
+    });
 
     setWindowTitle("Joint Settings");
 }

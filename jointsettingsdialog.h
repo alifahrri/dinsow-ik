@@ -22,6 +22,7 @@ public:
     ~JointSettingsDialog();
 
 signals:
+    void ikRequest();
     void jointValueChanged();
     void leftIkRequest();
     void rightIkRequest();

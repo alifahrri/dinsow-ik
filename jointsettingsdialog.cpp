@@ -112,6 +112,7 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
         }
     });
 
+#if 0
     connect(ui->x_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
     connect(ui->y_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
     connect(ui->z_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(leftIkRequest()));
@@ -125,6 +126,21 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     connect(ui->rx_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
     connect(ui->ry_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
     connect(ui->rz_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(rightIkRequest()));
+#else
+    connect(ui->x_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->y_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->z_ik_left_slider,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->rx_ik_left_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->ry_ik_left_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->rz_ik_left_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+
+    connect(ui->x_ik_right_slider,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->y_ik_right_slider,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->z_ik_right_slider,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->rx_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->ry_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+    connect(ui->rz_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
+#endif
 
     setWindowTitle("Joint Settings");
 }

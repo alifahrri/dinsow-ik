@@ -11,17 +11,25 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setCentralWidget(widget3d->getContainer());
 
-    connect(joint_dialog,&JointSettingsDialog::jointValueChanged,[=]
-    {
-        auto joints = joint_dialog->jointValues();
-        auto finger_joints = joint_dialog->fingerJointValues();
-        widget3d->modifier->applyFK(joints,finger_joints);
-    });
+//    connect(joint_dialog,&JointSettingsDialog::jointValueChanged,[=]
+//    {
+//        auto joints = joint_dialog->jointValues();
+//        auto finger_joints = joint_dialog->fingerJointValues();
+//        widget3d->modifier->applyFK(joints,finger_joints);
+//    });
 
-    connect(joint_dialog,&JointSettingsDialog::leftIkRequest,[=]
+//    connect(joint_dialog,&JointSettingsDialog::leftIkRequest,[=]
+//    {
+//        auto frame = joint_dialog->leftArmIk();
+//        widget3d->modifier->dinsowIK(frame);
+//    });
+
+    connect(joint_dialog,&JointSettingsDialog::ikRequest,[=]
     {
-        auto frame = joint_dialog->leftArmIk();
-        widget3d->modifier->dinsowIK(frame);
+        auto left_frame = joint_dialog->leftArmIk();
+        auto right_frame = joint_dialog->rightArmIk();
+        left_frame.append(right_frame);
+        widget3d->modifier->dinsowIK(left_frame);
     });
 
     setWindowTitle("Widget3D");

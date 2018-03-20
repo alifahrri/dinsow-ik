@@ -8,8 +8,12 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
+#include <kdl/chainiksolvervel_pinv_nso.hpp>
+#include <kdl/chainiksolvervel_pinv_givens.hpp>
+#include <kdl/chainiksolvervel_wdls.hpp>
 #include <kdl/chainiksolverpos_nr.hpp>
 #include <kdl/chainiksolverpos_nr_jl.hpp>
+#include <kdl/chainiksolverpos_lma.hpp>
 #include <vector>
 #include <string>
 
@@ -27,7 +31,7 @@ public:
     {
         double x, y, z;
         double rx, ry, rz;
-        std::string str();
+        std::string str() const;
     };
 
     template <int n>
@@ -44,8 +48,13 @@ public:
         KDL::Chain chain;
         KDL::ChainFkSolverPos_recursive *fk_solver;
         KDL::ChainIkSolverVel_pinv *ikvel_solver;
+        KDL::ChainIkSolverVel_wdls *ikvel_solver_wdls;
+        KDL::ChainIkSolverPos_LMA *ikpos_solver_lma;
         KDL::ChainIkSolverPos_NR *ikpos_solver;
+        KDL::ChainIkSolverPos_NR_JL *ikpos_solver_jl;
         JointValues<n> joint;
+        JointValues<n> lower_limit;
+        JointValues<n> upper_limit;
     };
 
     typedef JointValues<6> ArmJoints;
@@ -62,6 +71,7 @@ private:
     ArmJoints inverseKinematic(const Pose &p, DinsowArmChain &chain);
     Pose forwardKinematic(const ArmJoints &q);
     ArmJoints inverseKinematic(const Pose &p, const ArmJoints &init_q);
+    void normalize(ArmJoints &arm_joints);
 
 private:
     DinsowArmChain left_arm;

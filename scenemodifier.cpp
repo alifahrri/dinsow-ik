@@ -2,7 +2,8 @@
 #include "dinsowkinematic.h"
 
 #define TO_DEG (180.0/M_PI)
-#define TEST
+#define TO_RAD (M_PI/180.0)
+//#define TEST
 
 SceneModifier::SceneModifier(Qt3DCore::QEntity *_rootEntity)
     : rootEntity(_rootEntity),
@@ -17,6 +18,14 @@ void SceneModifier::dinsowFK()
 {
     if(!dinsow)
         return;
+}
+
+void SceneModifier::setDinsowFK(QVector<double> left_arm, QVector<double> right_arm)
+{
+    DinsowKinematic::ArmJoints joints;
+    for(int i=0; i<left_arm.size(); i++)
+        joints.q[i] = left_arm.at(i);
+    dinsow->forwardKinematic(joints,DinsowKinematic::LEFT);
 }
 
 inline
@@ -244,8 +253,8 @@ void SceneModifier::applyFK(QVector<double> q, QVector<double> q_hand)
         joint[i]->transform->setMatrix(tf[i].matrix());
     }
 
-    qDebug() << "joint" << 6 << joint[6]->transform->translation() << joint[6]->transform->rotation();
-    qDebug() << "joint" << 13 << joint[13]->transform->translation() << joint[13]->transform->rotation();
+//    qDebug() << "joint" << 6 << joint[6]->transform->translation() << joint[6]->transform->rotation();
+//    qDebug() << "joint" << 13 << joint[13]->transform->translation() << joint[13]->transform->rotation();
 
     if(q_hand.size()!=22)
         goto MOVE_LINK;
@@ -286,15 +295,19 @@ void SceneModifier::dinsowIK(QVector<double> frame)
 {
     if(!dinsow)
         return;
-    auto pose = DinsowKinematic::Pose({frame[0],frame[1],frame[2],
+    auto left_pose = DinsowKinematic::Pose({frame[0],frame[1],frame[2],
                                        frame[3],frame[4],frame[5]});
-    auto joints = dinsow->inverseKinematic(pose,DinsowKinematic::LEFT);
+    auto right_pose = DinsowKinematic::Pose({frame[6],frame[7],frame[8],
+                                       frame[9],frame[10],frame[11]});
+    auto left_joints = dinsow->inverseKinematic(left_pose,DinsowKinematic::LEFT);
+    auto right_joints = dinsow->inverseKinematic(right_pose,DinsowKinematic::RIGHT);
     QVector<double> qjoints, qhands;
     qjoints.push_back(0.0);
     for(size_t i=0; i<6; i++)
-        qjoints.push_back(joints.q[i]*TO_DEG);
-    for(size_t i=0; i<7; i++)
-        qjoints.push_back(0.0);
+        qjoints.push_back(left_joints.q[i]*TO_DEG);
+    qjoints.push_back(0.0);
+    for(size_t i=0; i<6; i++)
+        qjoints.push_back(right_joints.q[i]*TO_DEG);
     for(size_t i=0; i<22; i++)
         qhands.push_back(0.0);
     applyFK(qjoints,qhands);

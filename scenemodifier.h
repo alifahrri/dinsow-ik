@@ -32,6 +32,7 @@ public:
 
 private:
     void dinsowFK();
+    void setDinsowFK(QVector<double> left_arm, QVector<double> right_arm);
     void initScene();
     void moveLink();
     QQuaternion angle(double q, int idx);

@@ -2,6 +2,7 @@
 
 #define DEBUG
 //#define TEST_CHAIN
+#define DEBUG_IK
 #define USE_ROTATION
 #define USE_LMA
 
@@ -13,18 +14,6 @@ using namespace KDL;
 
 DinsowKinematic::DinsowKinematic()
 {
-    lhand_chain.addSegment(Segment(Joint("j0",Joint::None)));
-    lhand_chain.addSegment(Segment(Joint("j1",Joint::RotY),Frame(Vector(0.0,10.0,0.0))));
-    lhand_chain.addSegment(Segment(Joint("j2",Joint::RotX),Frame(Vector(0.0,0.0,0.0))));
-    lhand_chain.addSegment(Segment(Joint("j3",Joint::RotZ),Frame(Vector(0.0,0.0,-20.0))));
-    lhand_chain.addSegment(Segment(Joint("j4",Joint::RotY),Frame(Vector(0.0,0.0,0.0))));
-    lhand_chain.addSegment(Segment(Joint("j5",Joint::RotZ),Frame(Vector(0.0,0.0,-20.0))));
-    lhand_chain.addSegment(Segment(Joint("j6",Joint::RotY),Frame(Vector(0.0,0.0,0.0))));
-
-    lhand_chain_fk = new ChainFkSolverPos_recursive(lhand_chain);
-    lhand_ik_vel = new ChainIkSolverVel_pinv(lhand_chain);
-    lhand_ik_pos = new ChainIkSolverPos_NR(lhand_chain,*lhand_chain_fk,*lhand_ik_vel);
-
     left_arm.chain.addSegment(Segment(Joint("j0",Joint::None)));
     left_arm.chain.addSegment(Segment(Joint("j1",Joint::RotY),Frame(Vector(0.0,10.0,0.0))));
     left_arm.chain.addSegment(Segment(Joint("j2",Joint::RotX),Frame(Vector(0.0,0.0,0.0))));
@@ -34,33 +23,48 @@ DinsowKinematic::DinsowKinematic()
     left_arm.chain.addSegment(Segment(Joint("j6",Joint::RotY),Frame(Vector(0.0,0.0,0.0))));
 
     Eigen::Matrix<double,6,1> w_mat;
-    std::cout << "w : " << w_mat << '\n';
     w_mat(0,0) = 1.0;
     w_mat(1,0) = 1.0;
     w_mat(2,0) = 1.0;
 
-    w_mat(3,0) = 1.0;
-    w_mat(4,0) = 1.0;
-    w_mat(5,0) = 1.0;
-    std::cout << "w : " << w_mat << '\n';
+#ifdef USE_ROTATION
+    w_mat(3,0) = 0.6;
+    w_mat(4,0) = 0.6;
+    w_mat(5,0) = 0.6;
+#else
+    w_mat(3,0) = 0.25;
+    w_mat(4,0) = 0.25;
+    w_mat(5,0) = 0.25;
+#endif
+#ifdef DEBUG_IK
+    std::cout << "w :\n" << w_mat << '\n';
+#endif
+
+    JntArray q_min(7);
+    JntArray q_max(7);
+
+    ArmJoints lower;
+    ArmJoints upper;
+
+    q_min(0) = 0.0;        q_max(0) = 0.0;
+    q_min(1) = -M_PI/2;    q_max(1) = M_PI/2;
+    q_min(2) = -M_PI;      q_max(2) = 0.0;
+    q_min(3) = -M_PI/2;    q_max(3) = M_PI/2;
+    q_min(4) = -M_PI;      q_max(4) = 0.0;
+    q_min(5) = 0.0;    q_max(5) = M_PI/2;
+    q_min(6) = -M_PI/2;    q_max(6) = M_PI/2;
+    for(int i=1; i<7; i++)
+    {
+        lower.q[i] = q_min(i);
+        upper.q[i] = q_max(i);
+    }
 
     left_arm.fk_solver = new ChainFkSolverPos_recursive(left_arm.chain);
     left_arm.ikvel_solver = new ChainIkSolverVel_pinv(left_arm.chain);
     left_arm.ikvel_solver_wdls = new ChainIkSolverVel_wdls(left_arm.chain);
     left_arm.ikpos_solver_lma = new ChainIkSolverPos_LMA(left_arm.chain,w_mat);
-    left_arm.ikpos_solver = new ChainIkSolverPos_NR(left_arm.chain,*(left_arm.fk_solver),*(left_arm.ikvel_solver_wdls),500);
-
-    JntArray q_min(7);
-    JntArray q_max(7);
-
-    q_min(0) = 0.0;     q_max(0) = 0.0;
-    q_min(1) = M_PI;    q_max(1) = -M_PI;
-    q_min(2) = M_PI;    q_max(2) = -M_PI;
-    q_min(3) = M_PI;    q_max(3) = -M_PI;
-    q_min(4) = M_PI;    q_max(4) = -M_PI;
-    q_min(5) = M_PI;    q_max(5) = -M_PI;
-    q_min(6) = M_PI;    q_max(6) = -M_PI;
-    left_arm.ikpos_solver_jl = new ChainIkSolverPos_NR_JL(left_arm.chain,q_min,q_max,*(left_arm.fk_solver),*(left_arm.ikvel_solver),5000);
+    left_arm.lower_limit = lower;
+    left_arm.upper_limit = upper;
 
     right_arm.chain.addSegment(Segment(Joint("j0",Joint::None)));
     right_arm.chain.addSegment(Segment(Joint("j1",Joint::RotY),Frame(Vector(0.0,-10.0,0.0))));
@@ -70,20 +74,26 @@ DinsowKinematic::DinsowKinematic()
     right_arm.chain.addSegment(Segment(Joint("j5",Joint::RotZ),Frame(Vector(0.0,0.0,-20.0))));
     right_arm.chain.addSegment(Segment(Joint("j6",Joint::RotY),Frame(Vector(0.0,0.0,0.0))));
 
+    q_min(0) = 0.0;        q_max(0) = 0.0;
+    q_min(1) = -M_PI/2;    q_max(1) = M_PI/2;
+    q_min(2) = -M_PI;      q_max(2) = 0.0;
+    q_min(3) = -M_PI/2;    q_max(3) = M_PI/2;
+    q_min(4) = -M_PI;      q_max(4) = 0.0;
+    q_min(5) = 0.0;    q_max(5) = M_PI/2;
+    q_min(6) = -M_PI/2;    q_max(6) = M_PI/2;
+
+    for(int i=1; i<7; i++)
+    {
+        lower.q[i] = q_min(i);
+        upper.q[i] = q_max(i);
+    }
+
     right_arm.fk_solver = new ChainFkSolverPos_recursive(right_arm.chain);
     right_arm.ikvel_solver = new ChainIkSolverVel_pinv(right_arm.chain);
     right_arm.ikvel_solver_wdls = new ChainIkSolverVel_wdls(right_arm.chain);
     right_arm.ikpos_solver_lma = new ChainIkSolverPos_LMA(right_arm.chain,w_mat);
-    right_arm.ikpos_solver = new ChainIkSolverPos_NR(right_arm.chain,*(right_arm.fk_solver),*(right_arm.ikvel_solver));
-
-    q_min(0) = 0.0;     q_max(0) = 0.0;
-    q_min(1) = M_PI;    q_max(1) = -M_PI;
-    q_min(2) = M_PI;    q_max(2) = -M_PI;
-    q_min(3) = M_PI;    q_max(3) = -M_PI;
-    q_min(4) = M_PI;    q_max(4) = -M_PI;
-    q_min(5) = M_PI;    q_max(5) = -M_PI;
-    q_min(6) = M_PI;    q_max(6) = -M_PI;
-    right_arm.ikpos_solver_jl = new ChainIkSolverPos_NR_JL(right_arm.chain,q_min,q_max,*(right_arm.fk_solver),*(right_arm.ikvel_solver));
+    right_arm.lower_limit = lower;
+    right_arm.upper_limit = upper;
 
 #ifdef TEST
     auto test_fk = [&](std::vector<double> j)->std::vector<double>
@@ -183,31 +193,30 @@ DinsowKinematic::DinsowKinematic()
 DinsowKinematic::Pose DinsowKinematic::forwardKinematic(const DinsowKinematic::ArmJoints &q, DinsowKinematic::ArmSelect_t arm)
 {
     Pose p;
-    switch (arm) {
-    case LEFT:
-        p = forwardKinematic(q,left_arm);
-        break;
-    case RIGHT:
-        p = forwardKinematic(q,right_arm);
-        break;
-    default:
-        break;
-    }
+    DinsowArmChain &chain = (arm == LEFT) ? left_arm : right_arm;
+    p = forwardKinematic(q,chain);
     return p;
 }
 
-DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinematic::Pose &p, DinsowKinematic::ArmSelect_t arm)
+DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinematic::Pose &p, DinsowKinematic::ArmSelect_t arm, int retry)
 {
-    std::cout << "[InverseKinematic] p : " << p.str() << std::endl;
     ArmJoints j;
-    switch (arm) {
-    case LEFT:
-        j = inverseKinematic(p,left_arm);
-        break;
-    case RIGHT:
-        j = inverseKinematic(p,right_arm);
-        break;
+    DinsowArmChain &chain = (arm == LEFT) ? left_arm : right_arm;
+    j = inverseKinematic(p,chain);
+#if 0
+    std::vector<int> limits;
+    while(!checkLimits(chain,j,limits))
+    {
+        std::cout << "[InverseKinematic] retry..\n";
+        randomizeJoints(chain);
+        j = inverseKinematic(p,chain);
+        if(retry<=0)
+            break;
+        retry--;
     }
+    if(checkLimits(chain,j,limits))
+#endif
+    apply(j,chain);
     return j;
 }
 
@@ -221,28 +230,15 @@ DinsowKinematic::ArmJoints DinsowKinematic::joints(DinsowKinematic::ArmSelect_t 
     }
 }
 
-DinsowKinematic::Pose DinsowKinematic::forwardKinematic(const ArmJoints &q, DinsowArmChain &chain)
+DinsowKinematic::Pose DinsowKinematic::forwardKinematic(const DinsowKinematic::ArmJoints &q, DinsowKinematic::DinsowArmChain &chain)
 {
-    DinsowKinematic::Pose end_ef;
-    auto n = chain.chain.getNrOfJoints();
-    KDL::JntArray joints(n);
-    KDL::Frame in_frame;
-    for(int i=0; i<n; i++)
-        joints(i) = q.q[i];
-    auto err = chain.fk_solver->JntToCart(joints,in_frame);
 
-    end_ef.x = in_frame.p.x();
-    end_ef.y = in_frame.p.y();
-    end_ef.z = in_frame.p.z();
-    in_frame.M.GetRPY(end_ef.rx,end_ef.ry,end_ef.rz);
-
-    chain.joint = q;
-    return end_ef;
 }
 
 DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinematic::Pose &p, DinsowArmChain &chain)
 {
     auto n = chain.chain.getNrOfJoints();
+    std::stringstream ss;
     ArmJoints joints;
     KDL::JntArray out_q(n);
     KDL::JntArray in_q(n);
@@ -256,12 +252,18 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
     KDL::Frame in_frame(Vector(p.x,p.y,p.z));
 #endif
 #ifdef USE_LMA
+#ifdef DEBUG_LMA
     chain.ikpos_solver_lma->display_information = true;
+#endif
     auto err = chain.ikpos_solver_lma->CartToJnt(in_q,in_frame,out_q);
-    std::cout << "IK : " << (err==0 ? "success\n" : (err==-1 ? "gradients towards joint is too small\n" : (err==-2 ? "joint position increments are too small\n" : "number of iteration is exceeded\n")));
+    ss << "IK : " << (err==0 ? "success\n" : (err==-1 ? "gradients towards joint is too small\n" : (err==-2 ? "joint position increments are too small\n" : "number of iteration is exceeded\n")));
 #else
     auto err = chain.ikpos_solver_jl->CartToJnt(in_q,in_frame,out_q);
-    std::cout << "IK : " << chain.ikpos_solver->strError(err) << '\n';
+    ss << "IK : " << chain.ikpos_solver->strError(err) << '\n';
+#endif
+#ifdef DEBUG_IK
+    std::cout << "[InverseKinematic] p : " << p.str() << std::endl
+              << ss.str() << std::endl;
 #endif
     for(int i=0; i<n; i++)
         joints.q[i] = out_q(i);
@@ -270,22 +272,19 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
     joints.q[5] = p.ry;
 #endif
     normalize(joints);
-    chain.joint = joints;
     return joints;
 }
 
-DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinematic::Pose &p, const ArmJoints &init_q)
+void DinsowKinematic::apply(const DinsowKinematic::ArmJoints &q, DinsowKinematic::DinsowArmChain &chain, bool clip)
 {
-    DinsowKinematic::JointValues<6> joints;
-    KDL::JntArray out_q(6);
-    KDL::JntArray in_q(lhand_chain.getNrOfJoints());
     for(int i=0; i<6; i++)
-        in_q(i) = init_q.q[i];
-    KDL::Frame in_frame(Vector(p.x,p.y,p.z));
-    lhand_ik_pos->CartToJnt(in_q,in_frame,out_q);
-    for(int i=0; i<6; i++)
-        joints.q[i] = out_q(i);
-    return joints;
+    {
+        chain.joint.q[i] = q.q[i];
+        if(chain.joint.q[i] < chain.lower_limit.q[i])
+            chain.joint.q[i] = chain.lower_limit.q[i];
+        else if(chain.joint.q[i] > chain.upper_limit.q[i])
+            chain.joint.q[i] = chain.upper_limit.q[i];
+    }
 }
 
 void DinsowKinematic::normalize(DinsowKinematic::ArmJoints &arm_joints)
@@ -299,20 +298,45 @@ void DinsowKinematic::normalize(DinsowKinematic::ArmJoints &arm_joints)
     }
 }
 
-DinsowKinematic::Pose DinsowKinematic::forwardKinematic(const ArmJoints &q)
+void DinsowKinematic::setJointLimits(DinsowKinematic::DinsowArmChain &chain, const ArmJoints &min, const ArmJoints &max)
 {
-    DinsowKinematic::Pose end_ef;
-    KDL::JntArray joints(6);
-    KDL::Frame in_frame;
-    for(int i=0; i<6; i++)
-        joints(i) = q.q[i];
-    auto err = lhand_chain_fk->JntToCart(joints,in_frame);
+    chain.lower_limit = min;
+    chain.upper_limit = max;
+}
 
-    end_ef.x = in_frame.p.x();
-    end_ef.y = in_frame.p.y();
-    end_ef.z = in_frame.p.z();
-    in_frame.M.GetRPY(end_ef.rx,end_ef.ry,end_ef.rz);
-    return end_ef;
+void DinsowKinematic::randomizeJoints(DinsowKinematic::DinsowArmChain &chain, std::vector<int> joints)
+{
+    static std::random_device rd;
+    static std::mt19937 twister(rd());
+    for(size_t i=0; i<N_ARM_JOINTS; i++)
+    {
+        if(joints.at(i)==0)
+            continue;
+        std::uniform_real_distribution<> dis(chain.lower_limit.q[i],
+                                             chain.upper_limit.q[i]);
+        chain.joint.q[i] = dis(twister);
+    }
+}
+
+bool DinsowKinematic::checkLimits(const DinsowKinematic::DinsowArmChain &chain, const DinsowKinematic::ArmJoints &joint, std::vector<int> &limit)
+{
+    auto ret = true;
+    limit.clear();
+    limit.resize(N_ARM_JOINTS,0);
+    for(size_t i=0; i<N_ARM_JOINTS; i++)
+    {
+        if(joint.q[i] > chain.upper_limit.q[i])
+        {
+            limit.at(i) = 1;
+            ret = false;
+        }
+        else if(joint.q[i] < chain.lower_limit.q[i])
+        {
+            limit.at(i) = -1;
+            ret = false;
+        }
+    }
+    return ret;
 }
 
 std::__cxx11::string DinsowKinematic::Pose::str() const

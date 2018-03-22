@@ -237,3 +237,30 @@ JointSettingsDialog::~JointSettingsDialog()
 {
     delete ui;
 }
+
+void JointSettingsDialog::setJointsFromIK(QVector<double> joints, QVector<double> hands)
+{
+    for(size_t i=1; i<7; i++)
+        left_arm[i] = joints[i];
+    for(size_t i=1; i<7; i++)
+        right_arm[i] = joints[i+7];
+    for(size_t i=0; i<11; i++)
+        left_finger[i] = hands[i];
+    for(size_t i=0; i<11; i++)
+        right_finger[i] = hands[i+11];
+    auto pos = ui->arm_select_slider->value();
+    if(pos)
+    {
+        for(int i=0; i<7; i++)
+            arm_slider.at(i)->setValue((int)right_arm.at(i));
+        for(int i=0; i<11; i++)
+            finger_slider.at(i)->setValue((int)right_finger.at(i));
+    }
+    else
+    {
+        for(int i=0; i<7; i++)
+            arm_slider.at(i)->setValue((int)left_arm.at(i));
+        for(int i=0; i<11; i++)
+            finger_slider.at(i)->setValue((int)left_finger.at(i));
+    }
+}

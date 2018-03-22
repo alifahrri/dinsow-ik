@@ -17,6 +17,8 @@
 #include <vector>
 #include <string>
 
+#define N_ARM_JOINTS 6
+
 class DinsowKinematic
 {
 public:
@@ -57,30 +59,27 @@ public:
         JointValues<n> upper_limit;
     };
 
-    typedef JointValues<6> ArmJoints;
-    typedef DinsowChain<6> DinsowArmChain;
+    typedef JointValues<N_ARM_JOINTS> ArmJoints;
+    typedef DinsowChain<N_ARM_JOINTS> DinsowArmChain;
 
 public:
     DinsowKinematic();
     Pose forwardKinematic(const ArmJoints &q, ArmSelect_t arm);
-    ArmJoints inverseKinematic(const Pose &p, ArmSelect_t arm);
+    ArmJoints inverseKinematic(const Pose &p, ArmSelect_t arm, int retry = 10);
     ArmJoints joints(ArmSelect_t arm);
 
 private:
     Pose forwardKinematic(const ArmJoints &q, DinsowArmChain &chain);
     ArmJoints inverseKinematic(const Pose &p, DinsowArmChain &chain);
-    Pose forwardKinematic(const ArmJoints &q);
-    ArmJoints inverseKinematic(const Pose &p, const ArmJoints &init_q);
+    void apply(const ArmJoints &q, DinsowArmChain &chain, bool clip = true);
     void normalize(ArmJoints &arm_joints);
+    void setJointLimits(DinsowArmChain &chain, const ArmJoints &min, const ArmJoints &max);
+    void randomizeJoints(DinsowArmChain &chain, std::vector<int> joints = std::vector<int>(N_ARM_JOINTS,1));
+    bool checkLimits(const DinsowArmChain &chain, const ArmJoints &joint, std::vector<int> &limit);
 
 private:
     DinsowArmChain left_arm;
     DinsowArmChain right_arm;
-
-    KDL::Chain lhand_chain;
-    KDL::ChainFkSolverPos_recursive *lhand_chain_fk;
-    KDL::ChainIkSolverVel_pinv *lhand_ik_vel;
-    KDL::ChainIkSolverPos_NR *lhand_ik_pos;
 };
 
 #endif // DINSOWKINEMATIC_H

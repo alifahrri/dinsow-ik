@@ -23,7 +23,6 @@ void Widget3D::init()
     view->defaultFrameGraph()->setClearColor(QColor(Qt::black));
     auto screenSize = view->screen()->size();
     container->setMinimumSize(QSize(200,100));
-//    container->setMaximumSize(screenSize);
     view->registerAspect(input);
 
     cameraEntity->lens()->setPerspectiveProjection(45.0f,16.0f/9.0f, 0.1f, 1000.0f);

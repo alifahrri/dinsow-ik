@@ -38,6 +38,9 @@ private:
     QQuaternion angle(double q, int idx);
     QQuaternion handAngle(double q, int idx);
 
+signals:
+    void jointUpdateIK(QVector<double> joints, QVector<double> hands);
+
 private:
     Qt3DCore::QEntity *rootEntity;
     QVector<QVector3D> relativePos;

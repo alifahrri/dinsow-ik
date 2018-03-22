@@ -31,7 +31,8 @@ SOURCES += main.cpp\
     jointsettingsdialog.cpp \
     jointentity.cpp \
     dinsowkinematic.cpp \
-    meshentity.cpp
+    meshentity.cpp \
+    dinsowmotion.cpp
 
 HEADERS  += mainwindow.h \
     widget3d.h \
@@ -40,7 +41,8 @@ HEADERS  += mainwindow.h \
     jointsettingsdialog.h \
     jointentity.h \
     dinsowkinematic.h \
-    meshentity.h
+    meshentity.h \
+    dinsowmotion.h
 
 FORMS    += mainwindow.ui \
     jointsettingsdialog.ui

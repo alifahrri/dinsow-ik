@@ -18,6 +18,14 @@ void SceneModifier::dinsowFK()
 {
     if(!dinsow)
         return;
+    auto l = dinsow->joints(DinsowKinematic::LEFT);
+    auto r = dinsow->joints(DinsowKinematic::RIGHT);
+    QVector<double> joints({0.0,l.q[0],l.q[1],l.q[2],l.q[3],l.q[4],l.q[5],
+                            0.0,r.q[0],r.q[1],r.q[2],r.q[3],r.q[4],r.q[5]});
+    for(auto& j : joints)
+        j *= TO_DEG;
+    QVector<double> finger_joints(22,0.0);
+    applyFK(joints,finger_joints);
 }
 
 void SceneModifier::setDinsowFK(QVector<double> left_arm, QVector<double> right_arm)
@@ -253,9 +261,6 @@ void SceneModifier::applyFK(QVector<double> q, QVector<double> q_hand)
         joint[i]->transform->setMatrix(tf[i].matrix());
     }
 
-//    qDebug() << "joint" << 6 << joint[6]->transform->translation() << joint[6]->transform->rotation();
-//    qDebug() << "joint" << 13 << joint[13]->transform->translation() << joint[13]->transform->rotation();
-
     if(q_hand.size()!=22)
         goto MOVE_LINK;
     for(int i=0; i<22; i++)
@@ -311,6 +316,7 @@ void SceneModifier::dinsowIK(QVector<double> frame)
     for(size_t i=0; i<22; i++)
         qhands.push_back(0.0);
     applyFK(qjoints,qhands);
+    emit jointUpdateIK(qjoints,qhands);
 }
 
 QQuaternion SceneModifier::angle(double q, int idx)

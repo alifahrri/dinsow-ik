@@ -11,12 +11,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setCentralWidget(widget3d->getContainer());
 
-        connect(joint_dialog,&JointSettingsDialog::jointValueChanged,[=]
-        {
-            auto joints = joint_dialog->jointValues();
-            auto finger_joints = joint_dialog->fingerJointValues();
-            widget3d->modifier->applyFK(joints,finger_joints);
-        });
+    connect(joint_dialog,&JointSettingsDialog::jointValueChanged,[=]
+    {
+        auto joints = joint_dialog->jointValues();
+        auto finger_joints = joint_dialog->fingerJointValues();
+        widget3d->modifier->applyFK(joints,finger_joints);
+    });
 
     connect(joint_dialog,&JointSettingsDialog::ikRequest,[=]
     {
@@ -30,6 +30,9 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         widget3d->modifier->dinsowIK(frame);
     });
+
+    connect(widget3d->modifier,SIGNAL(jointUpdateIK(QVector<double>,QVector<double>)),
+            joint_dialog,SLOT(setJointsFromIK(QVector<double>,QVector<double>)));
 
     setWindowTitle("Widget3D");
 

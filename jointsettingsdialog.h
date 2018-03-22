@@ -21,6 +21,9 @@ public:
     QVector<double> rightArmIk();
     ~JointSettingsDialog();
 
+public slots:
+    void setJointsFromIK(QVector<double> joints, QVector<double> hands);
+
 signals:
     void ikRequest();
     void btnIkRequest(QVector<double>);

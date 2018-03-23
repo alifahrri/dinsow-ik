@@ -31,13 +31,14 @@
 
 class SceneModifier;
 class DinsowKinematic;
+class DinsowMotion;
 
 class Widget3D
 {
 public:
     Widget3D();
     QWidget *getContainer();
-    void passKinematic(DinsowKinematic *dinsow);
+    void passDinsow(DinsowKinematic *dinsow, DinsowMotion *motion);
 public:
     SceneModifier *modifier;
 private:

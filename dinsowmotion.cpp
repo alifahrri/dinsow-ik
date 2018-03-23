@@ -1,6 +1,6 @@
 #include "dinsowmotion.h"
 
-//#define TEST
+#define TEST
 #ifdef TEST
 #include <iostream>
 #endif
@@ -25,12 +25,21 @@ DinsowMotion::DinsowMotion(DinsowKinematic &dinsow)
 #endif
 }
 
-DinsowMotion::DinsowArms DinsowMotion::motion(const DinsowKinematic::Pose &pose0, const DinsowKinematic::Pose &pose1, const DinsowMotion::Timer &timer)
+DinsowMotion::DinsowArms DinsowMotion::motion(const MotionPose &pose0, const MotionPose &pose1, const DinsowMotion::Timer &timer)
 {
     DinsowArms arm_joints;
-    auto p = linear(pose0,pose1,timer);
-    arm_joints.left = _dinsow.inverseKinematic(p,DinsowKinematic::LEFT);
-    arm_joints.right = _dinsow.inverseKinematic(p,DinsowKinematic::RIGHT);
+    auto pleft = linear(pose0.left,pose1.left,timer);
+    auto pright= linear(pose0.right,pose1.right,timer);
+#ifdef TEST
+    std::cout << "[motion] pose 0 :"
+              << "(left) : " << pose0.left.str() << std::endl
+              << "(right) : " << pose0.right.str() << std::endl
+              << "pose : \n(left) : " << pleft.str() << std::endl
+              << "pose : \n(right) : " << pright.str() << std::endl
+              << "time : " << timer.str() << std::endl;
+#endif
+    arm_joints.left = _dinsow.inverseKinematic(pleft,DinsowKinematic::LEFT);
+    arm_joints.right = _dinsow.inverseKinematic(pright,DinsowKinematic::RIGHT);
     return arm_joints;
 }
 

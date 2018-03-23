@@ -13,15 +13,22 @@ public:
         double current_time;
         std::string str() const;
     };
+
     struct DinsowArms
     {
         DinsowKinematic::ArmJoints left;
         DinsowKinematic::ArmJoints right;
     };
 
+    struct MotionPose
+    {
+        DinsowKinematic::Pose left;
+        DinsowKinematic::Pose right;
+    };
+
 public:
     DinsowMotion(DinsowKinematic &dinsow);
-    DinsowArms motion(const DinsowKinematic::Pose &pose0, const DinsowKinematic::Pose &pose1, const Timer &timer);
+    DinsowArms motion(const MotionPose &pose0, const MotionPose &pose1, const Timer &timer);
 
 private:
     DinsowKinematic &_dinsow;

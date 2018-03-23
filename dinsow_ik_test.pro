@@ -32,7 +32,8 @@ SOURCES += main.cpp\
     jointentity.cpp \
     dinsowkinematic.cpp \
     meshentity.cpp \
-    dinsowmotion.cpp
+    dinsowmotion.cpp \
+    servocontroller.cpp
 
 HEADERS  += mainwindow.h \
     widget3d.h \
@@ -42,12 +43,14 @@ HEADERS  += mainwindow.h \
     jointentity.h \
     dinsowkinematic.h \
     meshentity.h \
-    dinsowmotion.h
+    dinsowmotion.h \
+    servocontroller.h \
+    utility.hpp
 
 FORMS    += mainwindow.ui \
     jointsettingsdialog.ui
 
-LIBS += -lorocos-kdl
+LIBS += -lorocos-kdl -ldxl_x64_cpp -lrt
 
 RESOURCES += \
     dinsowbody.qrc

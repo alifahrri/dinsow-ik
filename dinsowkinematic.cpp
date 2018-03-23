@@ -2,8 +2,8 @@
 
 #define DEBUG
 //#define TEST_CHAIN
-#define DEBUG_IK
-#define USE_ROTATION
+//#define DEBUG_IK
+//#define USE_ROTATION
 #define USE_LMA
 
 #ifdef DEBUG
@@ -32,9 +32,9 @@ DinsowKinematic::DinsowKinematic()
     w_mat(4,0) = 0.6;
     w_mat(5,0) = 0.6;
 #else
-    w_mat(3,0) = 0.25;
-    w_mat(4,0) = 0.25;
-    w_mat(5,0) = 0.25;
+    w_mat(3,0) = 0.025;
+    w_mat(4,0) = 0.025;
+    w_mat(5,0) = 0.025;
 #endif
 #ifdef DEBUG_IK
     std::cout << "w :\n" << w_mat << '\n';
@@ -203,20 +203,22 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
     ArmJoints j;
     DinsowArmChain &chain = (arm == LEFT) ? left_arm : right_arm;
     j = inverseKinematic(p,chain);
-#if 0
+#if 1
     std::vector<int> limits;
     while(!checkLimits(chain,j,limits))
     {
+#if 1
         std::cout << "[InverseKinematic] retry..\n";
-        randomizeJoints(chain);
+#endif
+        randomizeJoints(chain,limits);
         j = inverseKinematic(p,chain);
         if(retry<=0)
             break;
         retry--;
     }
-    if(checkLimits(chain,j,limits))
 #endif
-    apply(j,chain);
+    if(checkLimits(chain,j,limits))
+        apply(j,chain);
     return j;
 }
 

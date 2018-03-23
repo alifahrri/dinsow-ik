@@ -31,6 +31,14 @@ MainWindow::MainWindow(QWidget *parent) :
         widget3d->modifier->dinsowIK(frame);
     });
 
+    connect(joint_dialog,&JointSettingsDialog::updateMotion,[=](QVector<double> f0, QVector<double> f1, QVector<double> time)
+    {
+#if 1
+        qDebug() << "[updateMotion]" << time;
+#endif
+        widget3d->modifier->dinsowMotionIK(f0,f1,time);
+    });
+
     connect(widget3d->modifier,SIGNAL(jointUpdateIK(QVector<double>,QVector<double>)),
             joint_dialog,SLOT(setJointsFromIK(QVector<double>,QVector<double>)));
 

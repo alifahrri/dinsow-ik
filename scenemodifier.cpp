@@ -1,5 +1,6 @@
 #include "scenemodifier.h"
 #include "dinsowkinematic.h"
+#include "dinsowmotion.h"
 
 #define TO_DEG (180.0/M_PI)
 #define TO_RAD (M_PI/180.0)
@@ -288,9 +289,10 @@ void SceneModifier::applyFK(QVector<double> q, QVector<double> q_hand)
     moveLink();
 }
 
-void SceneModifier::setDinsow(DinsowKinematic *kinematic)
+void SceneModifier::setDinsow(DinsowKinematic *kinematic, DinsowMotion *motion)
 {
     dinsow = kinematic;
+    this->motion = motion;
 #ifdef TEST
     dinsowIK(QVector<double>({0.0,10.0,-20.0,0.0,0.0,0.0}));
 #endif
@@ -313,6 +315,41 @@ void SceneModifier::dinsowIK(QVector<double> frame)
     qjoints.push_back(0.0);
     for(size_t i=0; i<6; i++)
         qjoints.push_back(right_joints.q[i]*TO_DEG);
+    for(size_t i=0; i<22; i++)
+        qhands.push_back(0.0);
+    applyFK(qjoints,qhands);
+    emit jointUpdateIK(qjoints,qhands);
+}
+
+void SceneModifier::dinsowMotionIK(QVector<double> f0, QVector<double> f1, QVector<double> t)
+{
+    DinsowMotion::MotionPose p0;
+    DinsowMotion::MotionPose p1;
+    DinsowMotion::Timer time;
+    p0.left.x = f0[0];  p0.left.y = f0[1];  p0.left.z = f0[2];
+    p0.left.rx = f0[3]; p0.left.ry = f0[4]; p0.left.rz = f0[5];
+
+    p0.right.x = f0[6];  p0.right.y = f0[7];  p0.right.z = f0[8];
+    p0.right.rx = f0[9]; p0.right.ry = f0[10]; p0.right.rz = f0[11];
+
+    p1.left.x = f1[0];  p1.left.y = f1[1];  p1.left.z = f1[2];
+    p1.left.rx = f1[3]; p1.left.ry = f1[4]; p1.left.rz = f1[5];
+
+    p1.right.x = f1[6];  p1.right.y = f1[7];  p1.right.z = f1[8];
+    p1.right.rx = f1[9]; p1.right.ry = f1[10]; p1.right.rz = f1[11];
+
+    time.init_time = t[0];
+    time.final_time = t[1];
+    time.current_time = t[2];
+
+    auto joints = motion->motion(p0,p1,time);
+    QVector<double> qjoints, qhands;
+    qjoints.push_back(0.0);
+    for(size_t i=0; i<6; i++)
+        qjoints.push_back(joints.left.q[i]*TO_DEG);
+    qjoints.push_back(0.0);
+    for(size_t i=0; i<6; i++)
+        qjoints.push_back(joints.right.q[i]*TO_DEG);
     for(size_t i=0; i<22; i++)
         qhands.push_back(0.0);
     applyFK(qjoints,qhands);

@@ -19,14 +19,20 @@ public:
     QVector<double> fingerJointValues();
     QVector<double> leftArmIk();
     QVector<double> rightArmIk();
+    QVector<bool> torque();
     ~JointSettingsDialog();
 
 public slots:
     void setJointsFromIK(QVector<double> joints, QVector<double> hands);
 
+private slots:
+    void playMotion();
+
 signals:
-    void ikRequest();
+    void updateMotion(QVector<double>,QVector<double>,QVector<double>);
     void btnIkRequest(QVector<double>);
+    void torqueRequest();
+    void ikRequest();
     void jointValueChanged();
     void leftIkRequest();
     void rightIkRequest();
@@ -39,6 +45,10 @@ private:
     QVector<double> right_finger;
     QVector<QSlider*> arm_slider;
     QVector<QSlider*> finger_slider;
+    QVector<double> motion_ik0;
+    QVector<double> motion_ik1;
+    QVector<double> time;
+    QTimer *motion_timer;
 };
 
 #endif // JOINTSETTINGSDIALOG_H

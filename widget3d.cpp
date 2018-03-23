@@ -12,9 +12,9 @@ QWidget *Widget3D::getContainer()
     return container;
 }
 
-void Widget3D::passKinematic(DinsowKinematic *dinsow)
+void Widget3D::passDinsow(DinsowKinematic *dinsow, DinsowMotion *motion)
 {
-    modifier->setDinsow(dinsow);
+    modifier->setDinsow(dinsow,motion);
 }
 
 inline

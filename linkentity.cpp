@@ -60,12 +60,12 @@ LinkEntity::LinkEntity(LinkType type, Qt3DCore::QEntity *root, QVector<double> p
             break;
         }
         transform = new Qt3DCore::QTransform();
-    //    transform->setTranslation(QVector3D(0.0f,0.0f,0.0f));
+        //    transform->setTranslation(QVector3D(0.0f,0.0f,0.0f));
 
-    //    material = new Qt3DExtras::QPhongAlphaMaterial();
+        //    material = new Qt3DExtras::QPhongAlphaMaterial();
         material = new Qt3DExtras::QPhongMaterial();
         material->setDiffuse(color);
-    //    material->setShininess(1.0);
+        //    material->setShininess(1.0);
         material->setSpecular(color);
 
         this->addComponent(mesh);
@@ -73,20 +73,20 @@ LinkEntity::LinkEntity(LinkType type, Qt3DCore::QEntity *root, QVector<double> p
     }
     else
     {
-//        auto mesh_file = new Qt3DRender::QMesh();
-//        mesh_file->setSource(file);
-//        mesh = mesh_file;
+        //        auto mesh_file = new Qt3DRender::QMesh();
+        //        mesh_file->setSource(file);
+        //        mesh = mesh_file;
         qDebug() << "setting mesh" << file.fileName();
         mesh = new Qt3DRender::QMesh(root);
         dynamic_cast<Qt3DRender::QMesh*>(mesh)->setSource(file);
         qDebug() << "mesh source :" << static_cast<Qt3DRender::QMesh*>(mesh)->source().toString();
         transform = new Qt3DCore::QTransform();
-    //    transform->setTranslation(QVector3D(0.0f,0.0f,0.0f));
+        //    transform->setTranslation(QVector3D(0.0f,0.0f,0.0f));
 
-    //    material = new Qt3DExtras::QPhongAlphaMaterial();
+        //    material = new Qt3DExtras::QPhongAlphaMaterial();
         material = new Qt3DExtras::QPhongMaterial();
         material->setDiffuse(color);
-    //    material->setShininess(1.0);
+        //    material->setShininess(1.0);
         material->setSpecular(color);
 
         this->addComponent(mesh);

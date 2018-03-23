@@ -19,6 +19,7 @@
 #include "meshentity.h"
 
 class DinsowKinematic;
+class DinsowMotion;
 
 class SceneModifier : public QObject
 {
@@ -27,8 +28,9 @@ public:
     explicit SceneModifier(Qt3DCore::QEntity *_rootEntity);
     ~SceneModifier() {}
     void applyFK(QVector<double> q, QVector<double> q_hand = QVector<double>());
-    void setDinsow(DinsowKinematic *kinematic);
+    void setDinsow(DinsowKinematic *kinematic, DinsowMotion *motion);
     void dinsowIK(QVector<double> frame);
+    void dinsowMotionIK(QVector<double> f0, QVector<double> f1, QVector<double> t);
 
 private:
     void dinsowFK();
@@ -52,6 +54,7 @@ private:
     QVector<JointEntity*> hand_joint;
     QVector<LinkEntity*> hand_link;
     DinsowKinematic *dinsow;
+    DinsowMotion *motion;
     MeshEntity *dinsow_body;
     MeshEntity *dinsow_head;
     MeshEntity *dinsow_base;

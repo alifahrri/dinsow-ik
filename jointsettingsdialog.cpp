@@ -1,7 +1,10 @@
 #include "jointsettingsdialog.h"
 #include "ui_jointsettingsdialog.h"
+#include <QTimer>
 #include <QDebug>
 #include <QHeaderView>
+
+#define MOTION_TEST
 
 JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -12,6 +15,7 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     right_arm.resize(7);
     left_finger.resize(11);
     right_finger.resize(11);
+    time.resize(3);
 
     for(int i=0; i<7; i++)
     {
@@ -45,7 +49,6 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     finger_slider[8] = ui->finger_slider9;
     finger_slider[9] = ui->finger_slider10;
     finger_slider[10] = ui->finger_slider11;
-
 
     for(auto& s : arm_slider)
         connect(s,SIGNAL(valueChanged(int)),this,SIGNAL(jointValueChanged()));
@@ -143,15 +146,16 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     connect(ui->rz_ik_right_dial,SIGNAL(valueChanged(int)),this,SIGNAL(ikRequest()));
 #endif
 
-    ui->tableWidget->setColumnCount(12);
+    ui->tableWidget->setColumnCount(13);
 
     QStringList horizontal_header;
     horizontal_header << "x (left)"     << "y (left)"   << "z (left)"
                       << "rx (left)"    << "ry (left)"  << "rz (left)"
                       << "x (right)"     << "y (right)"   << "z (right)"
-                      << "rx (right)"    << "ry (right)"  << "rz (right)";
+                      << "rx (right)"    << "ry (right)"  << "rz (right)"
+                      << "time";
     ui->tableWidget->setHorizontalHeaderLabels(horizontal_header);
-    for(size_t i=0; i<12; i++)
+    for(size_t i=0; i<ui->tableWidget->columnCount(); i++)
         ui->tableWidget->setColumnWidth(i,65);
 
     connect(ui->add_btn,&QPushButton::clicked,[=]
@@ -164,6 +168,7 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
         ui->tableWidget->setRowCount(row+1);
         for(size_t i=0; i<12; i++)
             ui->tableWidget->setItem(row,i,new QTableWidgetItem(QString::number(frame[i])));
+        ui->tableWidget->setItem(row,12,new QTableWidgetItem(QString::number(ui->time_sbox->value())));
     });
 
     connect(ui->set_btn,&QPushButton::clicked,[=]
@@ -177,7 +182,29 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
                 auto value = ui->tableWidget->item(row,i)->data(0).toDouble();
                 frame.push_back(value);
             }
-            this->btnIkRequest(frame);
+            if(row>=1)
+            {
+                if(ui->tableWidget->rowCount()>=2)
+                {
+                    QVector<double> frame1;
+                    for(int i=0; i<12; i++)
+                    {
+                        auto value = ui->tableWidget->item(row-1,i)->data(0).toDouble();
+                        frame1.push_back(value);
+                    }
+                    if(!motion_timer->isActive())
+                    {
+                        motion_ik0 = frame1;
+                        motion_ik1 = frame;
+                        time[0] = ui->tableWidget->item(row-1,12)->data(0).toDouble();
+                        time[1] = ui->tableWidget->item(row,12)->data(0).toDouble();
+                        time[2] = time[0];
+                        motion_timer->start(33);
+                    }
+                }
+            }
+            else
+                this->btnIkRequest(frame);
         }
     });
 
@@ -187,6 +214,10 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
         if(row>=0)
             ui->tableWidget->removeRow(row);
     });
+
+    motion_timer = new QTimer(this);
+
+    connect(motion_timer,SIGNAL(timeout()),this,SLOT(playMotion()));
 
     setWindowTitle("Joint Settings");
 }
@@ -216,7 +247,9 @@ QVector<double> JointSettingsDialog::leftArmIk()
     ret.push_back(ui->rx_ik_left_dial->value()/10.0);
     ret.push_back(ui->ry_ik_left_dial->value()/10.0);
     ret.push_back(ui->rz_ik_left_dial->value()/10.0);
+#if 0
     qDebug() << ret;
+#endif
     return ret;
 }
 
@@ -229,7 +262,22 @@ QVector<double> JointSettingsDialog::rightArmIk()
     ret.push_back(ui->rx_ik_right_dial->value()/10.0);
     ret.push_back(ui->ry_ik_right_dial->value()/10.0);
     ret.push_back(ui->rz_ik_right_dial->value()/10.0);
+#if 0
     qDebug() << ret;
+#endif
+    return ret;
+}
+
+QVector<bool> JointSettingsDialog::torque()
+{
+    QVector<bool> ret;
+    ret.resize(6);
+    ret[0] = ui->torque1_checkbox->isChecked();
+    ret[1] = ui->torque2_checkbox->isChecked();
+    ret[2] = ui->torque3_checkbox->isChecked();
+    ret[3] = ui->torque4_checkbox->isChecked();
+    ret[4] = ui->torque5_checkbox->isChecked();
+    ret[5] = ui->torque6_checkbox->isChecked();
     return ret;
 }
 
@@ -263,4 +311,16 @@ void JointSettingsDialog::setJointsFromIK(QVector<double> joints, QVector<double
         for(int i=0; i<11; i++)
             finger_slider.at(i)->setValue((int)left_finger.at(i));
     }
+}
+
+void JointSettingsDialog::playMotion()
+{
+    qDebug() << "play motion :"
+             << "interval :" << motion_timer->interval()
+             << "remaining time :" << motion_timer->remainingTime()
+             << "time :" << time;
+    time[2] += ((double)motion_timer->interval())/1000.0;
+    if(time.at(2)>time.at(1))
+        motion_timer->stop();
+    emit updateMotion(motion_ik0,motion_ik1,time);
 }

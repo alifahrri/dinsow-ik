@@ -3,8 +3,21 @@
 #include <QTimer>
 #include <QDebug>
 #include <QHeaderView>
+#include <sstream>
 
 #define MOTION_TEST
+#define GEAR1 (1.0)
+#define GEAR2 (1.0)
+#define GEAR3 (1.0)
+#define GEAR4 (1.0)
+#define GEAR5 (1.0)
+#define GEAR6 (1.0)
+#define ROT1 (1)
+#define ROT2 (1)
+#define ROT3 (1)
+#define ROT4 (1)
+#define ROT5 (1)
+#define ROT6 (1)
 
 JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -28,6 +41,22 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
         right_finger[i] = 0.0;
     }
 
+    QVector<double> gears;
+    gears.push_back(GEAR1);
+    gears.push_back(GEAR2);
+    gears.push_back(GEAR3);
+    gears.push_back(GEAR4);
+    gears.push_back(GEAR5);
+    gears.push_back(GEAR6);
+
+    QVector<double> rot;
+    rot.push_back(ROT1);
+    rot.push_back(ROT2);
+    rot.push_back(ROT3);
+    rot.push_back(ROT4);
+    rot.push_back(ROT5);
+    rot.push_back(ROT6);
+
     arm_slider.resize(7);
     arm_slider[0] = ui->slider1;
     arm_slider[1] = ui->slider2;
@@ -49,6 +78,38 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     finger_slider[8] = ui->finger_slider9;
     finger_slider[9] = ui->finger_slider10;
     finger_slider[10] = ui->finger_slider11;
+
+    pos_dial.resize(6);
+    pos_dial[0] = ui->ppos1_dial;
+    pos_dial[1] = ui->ppos2_dial;
+    pos_dial[2] = ui->ppos3_dial;
+    pos_dial[3] = ui->ppos4_dial;
+    pos_dial[4] = ui->ppos5_dial;
+    pos_dial[5] = ui->ppos6_dial;
+
+    goalpos_dial.resize(6);
+    goalpos_dial[0] = ui->goalpos1_dial;
+    goalpos_dial[1] = ui->goalpos2_dial;
+    goalpos_dial[2] = ui->goalpos3_dial;
+    goalpos_dial[3] = ui->goalpos4_dial;
+    goalpos_dial[4] = ui->goalpos5_dial;
+    goalpos_dial[5] = ui->goalpos6_dial;
+
+    pos_label.resize(6);
+    pos_label[0] = ui->ppos1_label;
+    pos_label[1] = ui->ppos2_label;
+    pos_label[2] = ui->ppos3_label;
+    pos_label[3] = ui->ppos4_label;
+    pos_label[4] = ui->ppos5_label;
+    pos_label[5] = ui->ppos6_label;
+
+    goalpos_label.resize(6);
+    goalpos_label[0] = ui->goalpos1_label;
+    goalpos_label[1] = ui->goalpos2_label;
+    goalpos_label[2] = ui->goalpos3_label;
+    goalpos_label[3] = ui->goalpos4_label;
+    goalpos_label[4] = ui->goalpos5_label;
+    goalpos_label[5] = ui->goalpos6_label;
 
     for(auto& s : arm_slider)
         connect(s,SIGNAL(valueChanged(int)),this,SIGNAL(jointValueChanged()));
@@ -158,6 +219,19 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     for(size_t i=0; i<ui->tableWidget->columnCount(); i++)
         ui->tableWidget->setColumnWidth(i,65);
 
+    QStringList joint_horizontal_header;
+    joint_horizontal_header << "Gear Ratio"
+                            << "Rotation";
+    ui->joint_settings_table->setColumnCount(2);
+    ui->joint_settings_table->setRowCount(6);
+    ui->joint_settings_table->setHorizontalHeaderLabels(joint_horizontal_header);
+    for(size_t i=0; i<6; i++)
+    {
+        ui->joint_settings_table->setColumnWidth(i,75);
+        ui->joint_settings_table->setItem(i,0,new QTableWidgetItem(QString::number(gears.at(i))));
+        ui->joint_settings_table->setItem(i,1,new QTableWidgetItem(QString::number(rot.at(i))));
+    }
+
     connect(ui->add_btn,&QPushButton::clicked,[=]
     {
         auto left_frame = leftArmIk();
@@ -218,8 +292,57 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     motion_timer = new QTimer(this);
 
     connect(motion_timer,SIGNAL(timeout()),this,SLOT(playMotion()));
+    auto port_list = QSerialPortInfo::availablePorts();
+    for(const QSerialPortInfo& s : port_list)
+        ui->serial_comm_cbx->addItem(s.portName());
+
+    connect(ui->connect_btn,&QPushButton::clicked,[=]
+    {
+        if(!connect_serial_cb)
+            return;
+        auto port = ui->serial_comm_cbx->currentText();
+        auto res = connect_serial_cb(QString("/dev/%1").arg(port).toStdString());
+        if(res)
+        {
+            ui->connect_btn->setText(QString("Disconnect"));
+            ui->connect_btn->setEnabled(false);
+        }
+    });
+
+    connect(ui->joint_settings_table,&QTableWidget::cellChanged,[=]
+    {
+        QVector<double> ratio;
+        for(size_t i=0; i<6; i++)
+            ratio.push_back(ui->tableWidget->itemAt(0,i)->data(0).toDouble());
+        qDebug() << "gear :" << ratio;
+    });
+
+    connect(ui->torque1_checkbox,SIGNAL(toggled(bool)),this,SIGNAL(torqueRequest()));
+    connect(ui->torque2_checkbox,SIGNAL(toggled(bool)),this,SIGNAL(torqueRequest()));
+    connect(ui->torque3_checkbox,SIGNAL(toggled(bool)),this,SIGNAL(torqueRequest()));
+    connect(ui->torque4_checkbox,SIGNAL(toggled(bool)),this,SIGNAL(torqueRequest()));
+    connect(ui->torque5_checkbox,SIGNAL(toggled(bool)),this,SIGNAL(torqueRequest()));
+    connect(ui->torque6_checkbox,SIGNAL(toggled(bool)),this,SIGNAL(torqueRequest()));
+
+    connect(ui->goalpos1_dial,SIGNAL(valueChanged(int)),this,SIGNAL(goalPosRequest()));
+    connect(ui->goalpos2_dial,SIGNAL(valueChanged(int)),this,SIGNAL(goalPosRequest()));
+    connect(ui->goalpos3_dial,SIGNAL(valueChanged(int)),this,SIGNAL(goalPosRequest()));
+    connect(ui->goalpos4_dial,SIGNAL(valueChanged(int)),this,SIGNAL(goalPosRequest()));
+    connect(ui->goalpos5_dial,SIGNAL(valueChanged(int)),this,SIGNAL(goalPosRequest()));
+    connect(ui->goalpos6_dial,SIGNAL(valueChanged(int)),this,SIGNAL(goalPosRequest()));
+
+    for(size_t i=0; i<6; i++)
+        connect(goalpos_dial[i],SIGNAL(valueChanged(int)),this,SLOT(setGoalPos()));
 
     setWindowTitle("Joint Settings");
+}
+
+void JointSettingsDialog::setJointFromController(std::vector<double> joints)
+{
+    ui->arm_select_slider->setValue(0);
+    for(size_t i=0; i<joints.size(); i++)
+        if(!std::isnan(joints.at(i)))
+            arm_slider.at(i)->setValue(joints[i]);
 }
 
 QVector<double> JointSettingsDialog::jointValues()
@@ -253,6 +376,28 @@ QVector<double> JointSettingsDialog::leftArmIk()
     return ret;
 }
 
+QVector<double> JointSettingsDialog::gearRatio()
+{
+    QVector<double> gear;
+    for(size_t i=0; i<ui->joint_settings_table->rowCount(); i++)
+    {
+        auto g = ui->joint_settings_table->itemAt(i,0)->data(0).toDouble();
+        gear.push_back(g);
+    }
+    return gear;
+}
+
+QVector<double> JointSettingsDialog::rotation()
+{
+    QVector<double> rot;
+    for(size_t i=0; i<ui->joint_settings_table->rowCount(); i++)
+    {
+        auto r = ui->joint_settings_table->itemAt(i,1)->data(0).toDouble();
+        rot.push_back(r);
+    }
+    return rot;
+}
+
 QVector<double> JointSettingsDialog::rightArmIk()
 {
     QVector<double> ret;
@@ -279,6 +424,27 @@ QVector<bool> JointSettingsDialog::torque()
     ret[4] = ui->torque5_checkbox->isChecked();
     ret[5] = ui->torque6_checkbox->isChecked();
     return ret;
+}
+
+QVector<int> JointSettingsDialog::goalPos()
+{
+    QVector<int> ret;
+    ret.push_back(ui->goalpos1_dial->value());
+    ret.push_back(ui->goalpos2_dial->value());
+    ret.push_back(ui->goalpos3_dial->value());
+    ret.push_back(ui->goalpos4_dial->value());
+    ret.push_back(ui->goalpos5_dial->value());
+    ret.push_back(ui->goalpos6_dial->value());
+    return ret;
+}
+
+void JointSettingsDialog::setPresentPos(std::vector<int> pos)
+{
+    for(size_t i=0; i<std::min(pos.size(),(size_t)6); i++)
+    {
+        pos_dial[i]->setValue(pos[i]);
+        pos_label[i]->setText(QString::number(pos[i]));
+    }
 }
 
 JointSettingsDialog::~JointSettingsDialog()
@@ -323,4 +489,10 @@ void JointSettingsDialog::playMotion()
     if(time.at(2)>time.at(1))
         motion_timer->stop();
     emit updateMotion(motion_ik0,motion_ik1,time);
+}
+
+void JointSettingsDialog::setGoalPos()
+{
+    for(size_t i=0; i<6; i++)
+        goalpos_label[i]->setText(QString::number(goalpos_dial[i]->value()));
 }

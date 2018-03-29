@@ -21,6 +21,8 @@ public:
 private:
     Ui::MainWindow *ui;
     Widget3D *widget3d;
+
+public:
     JointSettingsDialog *joint_dialog;
 };
 

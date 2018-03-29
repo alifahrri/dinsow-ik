@@ -14,6 +14,8 @@
 #define TO_RADIAN           (M_PI/180.0)
 #define TO_MX64_DEG         (4096/360)
 #define TO_MX64_RAD         (4096/M_PI)
+#define RX64_TO_DEG         (0.29)
+#define RX64_CENTER         (512)
 
 //mx64
 #define ADDR_GOAL_POS       30
@@ -51,6 +53,10 @@ ServoController::ServoController(std::string port)
     for(size_t i=0; i<servoIDs.size(); i++)
         syncReader.addParam(servoIDs[i]);
     portHandler->setBaudRate(BAUD_RATE);
+
+    jointPresentPos.resize(servoIDs.size());
+    jointPresentPosDeg.resize(servoIDs.size());
+    gearRatio.resize(servoIDs.size(),1.0);
 }
 
 ServoController::~ServoController()
@@ -58,20 +64,32 @@ ServoController::~ServoController()
     stop();
 }
 
+std::vector<double> ServoController::presentPosDeg()
+{
+    return jointPresentPosDeg;
+}
+
+std::vector<int> ServoController::presentPos()
+{
+    return jointPresentPos;
+}
+
+void ServoController::setGearRatio(std::vector<double> ratio)
+{
+    for(size_t i=0; i<std::min(ratio.size(),gearRatio.size()); i++)
+        gearRatio.at(i) = ratio.at(i);
+}
+
 void ServoController::setTorque(std::vector<bool> torque)
 {
-    for(size_t i=0; i<std::min(torque.size(),6); i++)
-    {
+    for(size_t i=0; i<std::min(torque.size(),(size_t)6); i++)
         jointValues[i].torque = torque[i];
-    }
 }
 
 void ServoController::setGoalPos(std::vector<int> goal)
 {
-    for(size_t i=0; i<std::min(goal.size(),6); i++)
-    {
+    for(size_t i=0; i<std::min(goal.size(),(size_t)6); i++)
         jointValues[i].value = goal[i];
-    }
 }
 
 bool ServoController::open(std::__cxx11::string port)
@@ -140,13 +158,17 @@ void ServoController::loop()
     {
         utility::timer timer;
         std::string read_str, write_str;
+#ifndef CONTROLLER_TEST
         readJoints();
+#endif
         syncRead(read_str);
         syncWrite(write_str);
 #ifdef DEBUG
         std::cout << read_str;
         std::cout << write_str;
 #endif
+        if(serial_cb)
+            serial_cb();
         timer.sleep(33.0);
     }
 }
@@ -190,7 +212,7 @@ bool ServoController::syncRead(std::__cxx11::string &str)
     bool get_data_result = false;
     std::stringstream ss;
     int dxl_comm_result = COMM_TX_FAIL;
-    ss << "[syncRead]======================\n";
+    ss << "[syncRead]=========================\n";
 
 #if 0 //protocol 2.0 only
     dxl_comm_result = syncReader.txRxPacket();
@@ -215,6 +237,10 @@ bool ServoController::syncRead(std::__cxx11::string &str)
            << packetHandler->getTxRxResult(dxl_comm_result) << " "
            << packetHandler->getRxPacketError(dxl_error) << " "
            << data << '\n';
+        if((dxl_error == 0) && (dxl_comm_result == COMM_SUCCESS))
+            jointPresentPos[i] = data;
+        else
+            jointPresentPos[i] = -1;
 #if 0
         get_data_result = syncReader.isAvailable(servoIDs[i],ADDR_PRESENT_POS,LEN_PRESENT_POS);
         if(!get_data_result)
@@ -224,8 +250,22 @@ bool ServoController::syncRead(std::__cxx11::string &str)
         }
 #endif
     }
+
+    processPresentPos();
+
     str = ss.str();
     return ret;
+}
+
+void ServoController::processPresentPos()
+{
+    for(size_t i=0; i<jointPresentPos.size(); i++)
+    {
+        if(jointPresentPos[i]>=0)
+            jointPresentPosDeg[i] = (jointPresentPos[i]-RX64_CENTER) * RX64_TO_DEG / gearRatio.at(i);
+        else
+            jointPresentPosDeg[i] = NAN;
+    }
 }
 
 bool ServoController::syncWrite(std::__cxx11::string &str)
@@ -242,7 +282,7 @@ bool ServoController::syncWrite(std::__cxx11::string &str)
             syncWriter.addParam(servoIDs[i],jointValues[i]());
     }
 
-    ss << "[syncWrite]======================\n";
+    ss << "[syncWrite]=========================\n";
 
     int dxl_torque_comm_result = syncTorqueWriter.txPacket();
     if(dxl_torque_comm_result != COMM_SUCCESS)
@@ -269,8 +309,13 @@ bool ServoController::syncWrite(std::__cxx11::string &str)
 template<int nbyte>
 uint8_t *ServoController::ServoJointValue<nbyte>::operator()()
 {
+#ifndef CONTROLLER_TEST
     value = (int)(joint*TO_MX64_RAD+offset);
+#endif
     for(size_t i=0; i<nbyte; i++)
-        servo_value[i] = (uint8_t)((value>>i)&&0xFF);
+    {
+        servo_value[i] = (uint8_t)((value>>(i*8)&0xFF));
+        std::cout << "[ServoController] servo[" << i << "] : " << (size_t)(servo_value[i]) << '\n';
+    }
     return servo_value;
 }

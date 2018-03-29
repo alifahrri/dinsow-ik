@@ -4,12 +4,15 @@
 #include <dynamixel_sdk/dynamixel_sdk.h>
 #include <thread>
 #include <atomic>
+#include <functional>
 
 class DinsowKinematic;
 
 class ServoController
 {
 public:
+    typedef std::function<void()> SerialCallback;
+
     template <int nbyte>
     struct ServoJointValue
     {
@@ -26,6 +29,9 @@ public:
 public:
     ServoController(std::__cxx11::string port = std::string("/dev/ttyUSB0"));
     ~ServoController();
+    std::vector<double> presentPosDeg();
+    std::vector<int> presentPos();
+    void setGearRatio(std::vector<double> ratio);
     void setTorque(std::vector<bool> torque);
     void setGoalPos(std::vector<int> goal);
     bool open(std::string port);
@@ -35,13 +41,15 @@ public:
 
 public:
     DinsowKinematic *dinsow = nullptr;
+    SerialCallback serial_cb = nullptr;
 
 private:
-    void loop();
-    void readJoints();
     bool enableTorque(bool en, std::string *str = nullptr);
-    bool syncRead(std::string &str);
     bool syncWrite(std::string &str);
+    bool syncRead(std::string &str);
+    void processPresentPos();
+    void readJoints();
+    void loop();
 
 private:
     dynamixel::PortHandler *portHandler;
@@ -50,6 +58,9 @@ private:
     dynamixel::GroupSyncWrite syncTorqueWriter;
     dynamixel::GroupSyncRead syncReader;
     std::vector<MX64ServoJoint> jointValues;
+    std::vector<double> gearRatio;
+    std::vector<double> jointPresentPosDeg;
+    std::vector<int> jointPresentPos;
     std::vector<int> servoIDs;
     std::atomic_bool running;
     std::thread thread;

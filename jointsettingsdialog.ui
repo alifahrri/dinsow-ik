@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>668</width>
-    <height>498</height>
+    <height>528</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,8 +36,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>654</width>
-        <height>407</height>
+        <width>668</width>
+        <height>435</height>
        </rect>
       </property>
       <attribute name="label">
@@ -495,7 +495,7 @@ color: rgb(164, 0, 0);</string>
         <x>0</x>
         <y>0</y>
         <width>668</width>
-        <height>405</height>
+        <height>435</height>
        </rect>
       </property>
       <attribute name="label">
@@ -911,168 +911,123 @@ color: rgb(164, 0, 0);</string>
       </layout>
      </widget>
      <widget class="QWidget" name="controller_page">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>668</width>
+        <height>435</height>
+       </rect>
+      </property>
       <attribute name="label">
        <string>Controller </string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_16">
+      <layout class="QGridLayout" name="gridLayout_18">
        <item row="0" column="0">
-        <widget class="QGroupBox" name="groupBox_6">
+        <layout class="QVBoxLayout" name="verticalLayout_8">
+         <item>
+          <widget class="QGroupBox" name="groupBox_9">
+           <property name="title">
+            <string>Serial Comm :</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_17">
+            <item row="0" column="0">
+             <widget class="QComboBox" name="serial_comm_cbx"/>
+            </item>
+            <item row="0" column="1">
+             <widget class="QPushButton" name="connect_btn">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Connect</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_6">
+           <property name="title">
+            <string>Torque (0x18)</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_13">
+            <item row="0" column="0">
+             <widget class="QCheckBox" name="torque1_checkbox">
+              <property name="text">
+               <string>Joint 1</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QCheckBox" name="torque4_checkbox">
+              <property name="text">
+               <string>Joint 4</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QCheckBox" name="torque2_checkbox">
+              <property name="text">
+               <string>Joint 2</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QCheckBox" name="torque5_checkbox">
+              <property name="text">
+               <string>Joint 5</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QCheckBox" name="torque3_checkbox">
+              <property name="text">
+               <string>Joint 3</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QCheckBox" name="torque6_checkbox">
+              <property name="text">
+               <string>Joint 6</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="0" column="1" colspan="2">
+        <widget class="QGroupBox" name="groupBox_10">
          <property name="title">
-          <string>Torque (0x18)</string>
+          <string>Joint Settings</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_13">
-          <item row="0" column="0">
-           <widget class="QCheckBox" name="torque1_checkbox">
-            <property name="text">
-             <string>Joint 1</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QCheckBox" name="torque4_checkbox">
-            <property name="text">
-             <string>Joint 4</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="torque2_checkbox">
-            <property name="text">
-             <string>Joint 2</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QCheckBox" name="torque5_checkbox">
-            <property name="text">
-             <string>Joint 5</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="torque3_checkbox">
-            <property name="text">
-             <string>Joint 3</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QCheckBox" name="torque6_checkbox">
-            <property name="text">
-             <string>Joint 6</string>
-            </property>
-           </widget>
+         <layout class="QGridLayout" name="gridLayout_16">
+          <property name="leftMargin">
+           <number>3</number>
+          </property>
+          <property name="topMargin">
+           <number>3</number>
+          </property>
+          <property name="rightMargin">
+           <number>3</number>
+          </property>
+          <property name="bottomMargin">
+           <number>3</number>
+          </property>
+          <item row="0" column="0" colspan="2">
+           <widget class="QTableWidget" name="joint_settings_table"/>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="0" column="1">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>122</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="1" column="1">
-        <widget class="QGroupBox" name="groupBox_8">
-         <property name="title">
-          <string>Goal Pos (0x1E)</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_15">
-          <item row="0" column="0">
-           <widget class="QDial" name="dial_7">
-            <property name="maximum">
-             <number>4096</number>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QDial" name="dial_8">
-            <property name="maximum">
-             <number>4096</number>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QDial" name="dial_9">
-            <property name="maximum">
-             <number>4096</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_40">
-            <property name="text">
-             <string>Joint 1</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label_41">
-            <property name="text">
-             <string>Joint 2</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_42">
-            <property name="text">
-             <string>Joint 3</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QDial" name="dial_10">
-            <property name="maximum">
-             <number>4096</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QDial" name="dial_11">
-            <property name="maximum">
-             <number>4096</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QDial" name="dial_12">
-            <property name="maximum">
-             <number>4096</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_43">
-            <property name="text">
-             <string>Joint 4</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="label_44">
-            <property name="text">
-             <string>Joint 5</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="2">
-           <widget class="QLabel" name="label_45">
-            <property name="text">
-             <string>Joint 6</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="1" column="0">
+       <item row="1" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox_7">
          <property name="title">
           <string>Present Pos (0x24)</string>
@@ -1270,6 +1225,201 @@ color: rgb(164, 0, 0);</string>
                </widget>
               </item>
              </layout>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QGroupBox" name="groupBox_8">
+         <property name="title">
+          <string>Goal Pos (0x1E)</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_15">
+          <item row="0" column="0">
+           <widget class="QDial" name="goalpos1_dial">
+            <property name="maximum">
+             <number>1023</number>
+            </property>
+            <property name="value">
+             <number>512</number>
+            </property>
+            <property name="wrapping">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDial" name="goalpos2_dial">
+            <property name="maximum">
+             <number>1023</number>
+            </property>
+            <property name="value">
+             <number>512</number>
+            </property>
+            <property name="wrapping">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QDial" name="goalpos3_dial">
+            <property name="maximum">
+             <number>1023</number>
+            </property>
+            <property name="value">
+             <number>512</number>
+            </property>
+            <property name="wrapping">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QLabel" name="label_40">
+              <property name="text">
+               <string>Joint 1</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="goalpos1_label">
+              <property name="text">
+               <string>0</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="1">
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <item>
+             <widget class="QLabel" name="label_41">
+              <property name="text">
+               <string>Joint 2</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="goalpos2_label">
+              <property name="text">
+               <string>0</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
+             <widget class="QLabel" name="label_42">
+              <property name="text">
+               <string>Joint 3</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="goalpos3_label">
+              <property name="text">
+               <string>0</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="0">
+           <widget class="QDial" name="goalpos4_dial">
+            <property name="maximum">
+             <number>1023</number>
+            </property>
+            <property name="value">
+             <number>512</number>
+            </property>
+            <property name="wrapping">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QDial" name="goalpos5_dial">
+            <property name="maximum">
+             <number>1023</number>
+            </property>
+            <property name="value">
+             <number>512</number>
+            </property>
+            <property name="wrapping">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QDial" name="goalpos6_dial">
+            <property name="maximum">
+             <number>1023</number>
+            </property>
+            <property name="value">
+             <number>512</number>
+            </property>
+            <property name="wrapping">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
+            <item>
+             <widget class="QLabel" name="label_43">
+              <property name="text">
+               <string>Joint 4</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="goalpos4_label">
+              <property name="text">
+               <string>0</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="3" column="1">
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <item>
+             <widget class="QLabel" name="label_44">
+              <property name="text">
+               <string>Joint 5</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="goalpos5_label">
+              <property name="text">
+               <string>0</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="3" column="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_13">
+            <item>
+             <widget class="QLabel" name="label_45">
+              <property name="text">
+               <string>Joint 6</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="goalpos6_label">
+              <property name="text">
+               <string>0</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>

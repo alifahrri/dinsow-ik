@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <vector>
 #include <QtSerialPort/QSerialPortInfo>
+#include "servocontroller.h"
 
 class QSlider;
 
@@ -25,12 +26,14 @@ public:
     explicit JointSettingsDialog(QWidget *parent = 0);
     void setJointFromController(std::vector<double> joints);
     void setPresentPos(std::vector<int> pos);
+    void showEEPROMSettings(const ServoController::EEPROMSettings &settings, int id);
+    bool eepromSettings(int id, ServoController::EEPROMSettings &settings);
     QVector<double> fingerJointValues();
     QVector<double> jointValues();
     QVector<double> rightArmIk();
     QVector<double> leftArmIk();
     QVector<double> gearRatio();
-    QVector<double> rotation();
+    QVector<int> rotation();
     QVector<bool> torque();
     QVector<int> goalPos();
     ~JointSettingsDialog();
@@ -50,6 +53,8 @@ signals:
     void jointSettingsUpdate(QVector<double>);
     void saveJointSettings(QVector<double>);
     void btnIkRequest(QVector<double>);
+    void eepromWriteRequest();
+    void eepromReadRequest();
     void jointValueChanged();
     void controllerRequest();
     void goalPosRequest();
@@ -73,6 +78,8 @@ private:
     QVector<double> motion_ik0;
     QVector<double> motion_ik1;
     QVector<double> time;
+    QVector<double> gears;
+    QVector<int> rot;
     QTimer *motion_timer;
 };
 

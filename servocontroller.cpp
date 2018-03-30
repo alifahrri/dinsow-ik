@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cmath>
 
+#define MX64_SERVO
 #define CONTROLLER_TEST
 #define DEBUG
 #define BAUD_RATE           (1000000)
@@ -16,6 +17,8 @@
 #define TO_MX64_RAD         (4096/M_PI)
 #define RX64_TO_DEG         (0.29)
 #define RX64_CENTER         (512)
+#define MX64_TO_DEG         (0.088)
+#define MX64_CENTER         (2048)
 
 //mx64
 #define ADDR_GOAL_POS       30
@@ -27,6 +30,12 @@
 
 #define TORQUE_ENABLE       1
 #define TORQUE_DISABLE      0
+
+#define ADDR_CW_LIMIT       (6)
+#define ADDR_CCW_LIMIT      (8)
+#define ADDR_MAX_TORQUE     (14)
+#define ADDR_TURN_OFFSET    (20)
+#define ADDR_RES_DIVIDER    (22)
 
 ServoController::ServoController(std::string port)
     : portHandler(dynamixel::PortHandler::getPortHandler(port.c_str())),
@@ -57,6 +66,7 @@ ServoController::ServoController(std::string port)
     jointPresentPos.resize(servoIDs.size());
     jointPresentPosDeg.resize(servoIDs.size());
     gearRatio.resize(servoIDs.size(),1.0);
+    rotation.resize(servoIDs.size(),1);
 }
 
 ServoController::~ServoController()
@@ -72,6 +82,107 @@ std::vector<double> ServoController::presentPosDeg()
 std::vector<int> ServoController::presentPos()
 {
     return jointPresentPos;
+}
+
+ServoController::EEPROMSettings ServoController::readEEPROM(int id)
+{
+    EEPROMSettings ret;
+    uint16_t data;
+    uint8_t dxl_error;
+    int dxl_comm_result = COMM_TX_FAIL;
+    mutex.lock();
+
+    dxl_comm_result = packetHandler->read2ByteTxRx(portHandler,id,ADDR_CW_LIMIT,&data,&dxl_error);
+    if((dxl_error == 0) && (dxl_comm_result == COMM_SUCCESS))
+        ret.cw_angle_limit = (uint)data;
+    else
+        ret.cw_angle_limit = NAN;
+
+    dxl_comm_result = packetHandler->read2ByteTxRx(portHandler,id,ADDR_CCW_LIMIT,&data,&dxl_error);
+    if((dxl_error == 0) && (dxl_comm_result == COMM_SUCCESS))
+        ret.ccw_angle_limit = (uint)data;
+    else
+        ret.ccw_angle_limit = NAN;
+
+    dxl_comm_result = packetHandler->read2ByteTxRx(portHandler,id,ADDR_MAX_TORQUE,&data,&dxl_error);
+    if((dxl_error == 0) && (dxl_comm_result == COMM_SUCCESS))
+        ret.max_torque = (uint)data;
+    else
+        ret.max_torque = NAN;
+
+    dxl_comm_result = packetHandler->read2ByteTxRx(portHandler,id,ADDR_TURN_OFFSET,&data,&dxl_error);
+    if((dxl_error == 0) && (dxl_comm_result == COMM_SUCCESS))
+        ret.multi_turn_offset = (int16_t)(data&0xFFFF);
+    else
+        ret.multi_turn_offset = NAN;
+
+    uint8_t data8;
+    dxl_comm_result = packetHandler->read1ByteTxRx(portHandler,id,ADDR_RES_DIVIDER,&data8,&dxl_error);
+    if((dxl_error == 0) && (dxl_comm_result == COMM_SUCCESS))
+        ret.resolution_divider = (int)data8;
+    else
+        ret.resolution_divider = NAN;
+
+    mutex.unlock();
+    return ret;
+}
+
+bool ServoController::writeEEPROM(const EEPROMSettings &settings, int id)
+{
+    uint8_t dxl_error;
+    uint16_t data;
+    auto success = true;
+    int dxl_comm_result = COMM_TX_FAIL;
+    mutex.lock();
+
+    data = settings.cw_angle_limit;
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler,id,ADDR_CW_LIMIT,data,&dxl_error);
+    if((dxl_error != 0) || (dxl_comm_result != COMM_SUCCESS))
+    {
+        success = false;
+        std::cout << packetHandler->getTxRxResult(dxl_comm_result) << std::endl;
+        std::cout << packetHandler->getRxPacketError(dxl_error) << std::endl;
+    }
+
+    data = settings.ccw_angle_limit;
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler,id,ADDR_CCW_LIMIT,data,&dxl_error);
+    if((dxl_error != 0) || (dxl_comm_result != COMM_SUCCESS))
+    {
+        success = false;
+        std::cout << packetHandler->getTxRxResult(dxl_comm_result) << std::endl;
+        std::cout << packetHandler->getRxPacketError(dxl_error) << std::endl;
+    }
+
+    data = settings.max_torque;
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler,id,ADDR_MAX_TORQUE,data,&dxl_error);
+    if((dxl_error != 0) || (dxl_comm_result != COMM_SUCCESS))
+    {
+        success = false;
+        std::cout << packetHandler->getTxRxResult(dxl_comm_result) << std::endl;
+        std::cout << packetHandler->getRxPacketError(dxl_error) << std::endl;
+    }
+
+    data = settings.multi_turn_offset;
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler,id,ADDR_TURN_OFFSET,data,&dxl_error);
+    if((dxl_error != 0) || (dxl_comm_result != COMM_SUCCESS))
+    {
+        success = false;
+        std::cout << packetHandler->getTxRxResult(dxl_comm_result) << std::endl;
+        std::cout << packetHandler->getRxPacketError(dxl_error) << std::endl;
+    }
+
+    data = settings.resolution_divider;
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler,id,ADDR_RES_DIVIDER,data,&dxl_error);
+    if((dxl_error != 0) || (dxl_comm_result != COMM_SUCCESS))
+    {
+        success = false;
+        std::cout << packetHandler->getTxRxResult(dxl_comm_result) << std::endl;
+        std::cout << packetHandler->getRxPacketError(dxl_error) << std::endl;
+    }
+
+    mutex.unlock();
+
+    return success;
 }
 
 void ServoController::setGearRatio(std::vector<double> ratio)
@@ -90,6 +201,12 @@ void ServoController::setGoalPos(std::vector<int> goal)
 {
     for(size_t i=0; i<std::min(goal.size(),(size_t)6); i++)
         jointValues[i].value = goal[i];
+}
+
+void ServoController::setRotation(std::vector<int> rot)
+{
+    for(size_t i=0; i<std::min(rot.size(),rotation.size()); i++)
+        rotation[i] = rot[i];
 }
 
 bool ServoController::open(std::__cxx11::string port)
@@ -161,8 +278,10 @@ void ServoController::loop()
 #ifndef CONTROLLER_TEST
         readJoints();
 #endif
+        mutex.lock();
         syncRead(read_str);
         syncWrite(write_str);
+        mutex.unlock();
 #ifdef DEBUG
         std::cout << read_str;
         std::cout << write_str;
@@ -261,8 +380,13 @@ void ServoController::processPresentPos()
 {
     for(size_t i=0; i<jointPresentPos.size(); i++)
     {
+#ifdef MX64_SERVO
         if(jointPresentPos[i]>=0)
-            jointPresentPosDeg[i] = (jointPresentPos[i]-RX64_CENTER) * RX64_TO_DEG / gearRatio.at(i);
+            jointPresentPosDeg[i] = rotation.at(i) * (jointPresentPos[i]-MX64_CENTER) * MX64_TO_DEG / gearRatio.at(i);
+#else
+        if(jointPresentPos[i]>=0)
+            jointPresentPosDeg[i] = rotation.at(i) * (jointPresentPos[i]-RX64_CENTER) * RX64_TO_DEG / gearRatio.at(i);
+#endif
         else
             jointPresentPosDeg[i] = NAN;
     }
@@ -318,4 +442,15 @@ uint8_t *ServoController::ServoJointValue<nbyte>::operator()()
         std::cout << "[ServoController] servo[" << i << "] : " << (size_t)(servo_value[i]) << '\n';
     }
     return servo_value;
+}
+
+std::__cxx11::string ServoController::EEPROMSettings::str()
+{
+    std::stringstream ss;
+    ss << "(CW : " << cw_angle_limit << "),"
+       << "(CCW : " << ccw_angle_limit << "),"
+       << "(MAX_TORQUE : " << max_torque << "),"
+       << "(OFFSET : " << multi_turn_offset << "),"
+       << "(DIVIDER : " << resolution_divider << ")";
+    return ss.str();
 }

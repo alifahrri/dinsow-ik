@@ -5,7 +5,11 @@
 #include <QHeaderView>
 #include <sstream>
 
+#define SERVO_MX64
+#define SERVO_MX64_MAX 4095
+#define SERVO_RX64_MAX 1023
 #define MOTION_TEST
+//#define GEAR1 (0.33333)
 #define GEAR1 (1.0)
 #define GEAR2 (1.0)
 #define GEAR3 (1.0)
@@ -13,11 +17,11 @@
 #define GEAR5 (1.0)
 #define GEAR6 (1.0)
 #define ROT1 (1)
-#define ROT2 (1)
-#define ROT3 (1)
-#define ROT4 (1)
-#define ROT5 (1)
-#define ROT6 (1)
+#define ROT2 (-1)
+#define ROT3 (-1)
+#define ROT4 (-1)
+#define ROT5 (-1)
+#define ROT6 (-1)
 
 JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -41,7 +45,6 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
         right_finger[i] = 0.0;
     }
 
-    QVector<double> gears;
     gears.push_back(GEAR1);
     gears.push_back(GEAR2);
     gears.push_back(GEAR3);
@@ -49,13 +52,13 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     gears.push_back(GEAR5);
     gears.push_back(GEAR6);
 
-    QVector<double> rot;
     rot.push_back(ROT1);
     rot.push_back(ROT2);
     rot.push_back(ROT3);
     rot.push_back(ROT4);
     rot.push_back(ROT5);
     rot.push_back(ROT6);
+    qDebug() << "[rot] :" << rot;
 
     arm_slider.resize(7);
     arm_slider[0] = ui->slider1;
@@ -110,6 +113,20 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     goalpos_label[3] = ui->goalpos4_label;
     goalpos_label[4] = ui->goalpos5_label;
     goalpos_label[5] = ui->goalpos6_label;
+
+#ifdef SERVO_MX64
+    for(size_t i=0; i<6; i++)
+    {
+        pos_dial[i]->setMaximum(SERVO_MX64_MAX);
+        goalpos_dial[i]->setMaximum(SERVO_MX64_MAX);
+    }
+#else
+    for(size_t i=0; i<6; i++)
+    {
+        pos_dial[i]->setMaximum(SERVO_RX64_MAX);
+        goalpos_dial[i]->setMaximum(SERVO_RX64_MAX);
+    }
+#endif
 
     for(auto& s : arm_slider)
         connect(s,SIGNAL(valueChanged(int)),this,SIGNAL(jointValueChanged()));
@@ -225,12 +242,15 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     ui->joint_settings_table->setColumnCount(2);
     ui->joint_settings_table->setRowCount(6);
     ui->joint_settings_table->setHorizontalHeaderLabels(joint_horizontal_header);
+
+
     for(size_t i=0; i<6; i++)
     {
         ui->joint_settings_table->setColumnWidth(i,75);
         ui->joint_settings_table->setItem(i,0,new QTableWidgetItem(QString::number(gears.at(i))));
         ui->joint_settings_table->setItem(i,1,new QTableWidgetItem(QString::number(rot.at(i))));
     }
+    ui->joint_settings_table->setEnabled(false);
 
     connect(ui->add_btn,&QPushButton::clicked,[=]
     {
@@ -334,6 +354,13 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     for(size_t i=0; i<6; i++)
         connect(goalpos_dial[i],SIGNAL(valueChanged(int)),this,SLOT(setGoalPos()));
 
+    connect(ui->read_eeprom_btn,SIGNAL(clicked(bool)),this,SIGNAL(eepromReadRequest()));
+    connect(ui->write_eeprom_btn,SIGNAL(clicked(bool)),this,SIGNAL(eepromWriteRequest()));
+
+    for(int i=0; i<ui->eeprom_table->rowCount(); i++)
+        for(int j=0; j<ui->eeprom_table->columnCount(); j++)
+            ui->eeprom_table->setItem(i,j,new QTableWidgetItem(QString("nan")));
+
     setWindowTitle("Joint Settings");
 }
 
@@ -342,7 +369,7 @@ void JointSettingsDialog::setJointFromController(std::vector<double> joints)
     ui->arm_select_slider->setValue(0);
     for(size_t i=0; i<joints.size(); i++)
         if(!std::isnan(joints.at(i)))
-            arm_slider.at(i)->setValue(joints[i]);
+            arm_slider.at(i+1)->setValue(joints[i]);
 }
 
 QVector<double> JointSettingsDialog::jointValues()
@@ -378,23 +405,31 @@ QVector<double> JointSettingsDialog::leftArmIk()
 
 QVector<double> JointSettingsDialog::gearRatio()
 {
+#if 0
     QVector<double> gear;
-    for(size_t i=0; i<ui->joint_settings_table->rowCount(); i++)
+    for(int i=0; i<ui->joint_settings_table->rowCount(); i++)
     {
         auto g = ui->joint_settings_table->itemAt(i,0)->data(0).toDouble();
         gear.push_back(g);
     }
-    return gear;
+#endif
+    return gears;
 }
 
-QVector<double> JointSettingsDialog::rotation()
+QVector<int> JointSettingsDialog::rotation()
 {
-    QVector<double> rot;
-    for(size_t i=0; i<ui->joint_settings_table->rowCount(); i++)
+#if 0
+    QVector<int> rot;
+    for(int i=0; i<ui->joint_settings_table->rowCount(); i++)
     {
-        auto r = ui->joint_settings_table->itemAt(i,1)->data(0).toDouble();
+        int r = ui->joint_settings_table->itemAt(i,1)->data(0).toInt();
+        qDebug() << "[JointSettingsDialog] rotation :" << r;
         rot.push_back(r);
     }
+#if 1
+    qDebug() << "[JointSettingsDialog] rotation :" << rot;
+#endif
+#endif
     return rot;
 }
 
@@ -445,6 +480,46 @@ void JointSettingsDialog::setPresentPos(std::vector<int> pos)
         pos_dial[i]->setValue(pos[i]);
         pos_label[i]->setText(QString::number(pos[i]));
     }
+}
+
+void JointSettingsDialog::showEEPROMSettings(const ServoController::EEPROMSettings &settings, int id)
+{
+#if 0
+    ui->eeprom_table->itemAt(id,0)->setText(QString::number(settings.cw_angle_limit));
+    ui->eeprom_table->itemAt(id,1)->setText(QString::number(settings.ccw_angle_limit));
+    ui->eeprom_table->itemAt(id,2)->setText(QString::number(settings.max_torque));
+    ui->eeprom_table->itemAt(id,3)->setText(QString::number(settings.multi_turn_offset));
+    ui->eeprom_table->itemAt(id,4)->setText(QString::number(settings.resolution_divider));
+#else
+    ui->eeprom_table->setItem(id,0,new QTableWidgetItem(QString::number(settings.cw_angle_limit)));
+    ui->eeprom_table->setItem(id,1,new QTableWidgetItem(QString::number(settings.ccw_angle_limit)));
+    ui->eeprom_table->setItem(id,2,new QTableWidgetItem(QString::number(settings.max_torque)));
+    ui->eeprom_table->setItem(id,3,new QTableWidgetItem(QString::number(settings.multi_turn_offset)));
+    ui->eeprom_table->setItem(id,4,new QTableWidgetItem(QString::number(settings.resolution_divider)));
+#endif
+}
+
+bool JointSettingsDialog::eepromSettings(int id, ServoController::EEPROMSettings &settings)
+{
+    bool valid = true;
+
+    settings.cw_angle_limit = ui->eeprom_table->item(id,0)->data(0).toInt(&valid);
+    if(!valid) goto DONE;
+
+    settings.ccw_angle_limit = ui->eeprom_table->item(id,1)->data(0).toInt(&valid);
+    if(!valid) goto DONE;
+
+    settings.max_torque = ui->eeprom_table->item(id,2)->data(0).toInt(&valid);
+    if(!valid) goto DONE;
+
+    settings.multi_turn_offset = ui->eeprom_table->item(id,3)->data(0).toInt(&valid);
+    if(!valid) goto DONE;
+
+    settings.resolution_divider = ui->eeprom_table->item(id,4)->data(0).toInt(&valid);
+    if(!valid) goto DONE;
+
+    DONE:
+    return valid;
 }
 
 JointSettingsDialog::~JointSettingsDialog()

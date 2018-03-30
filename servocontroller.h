@@ -4,6 +4,7 @@
 #include <dynamixel_sdk/dynamixel_sdk.h>
 #include <thread>
 #include <atomic>
+#include <mutex>
 #include <functional>
 
 class DinsowKinematic;
@@ -24,6 +25,16 @@ public:
         uint8_t *operator()();
     };
 
+    struct EEPROMSettings
+    {
+        int cw_angle_limit;
+        int ccw_angle_limit;
+        int max_torque;
+        int multi_turn_offset;
+        int resolution_divider;
+        std::string str();
+    };
+
     typedef ServoJointValue<2> MX64ServoJoint;
 
 public:
@@ -31,9 +42,12 @@ public:
     ~ServoController();
     std::vector<double> presentPosDeg();
     std::vector<int> presentPos();
+    EEPROMSettings readEEPROM(int id);
+    bool writeEEPROM(const EEPROMSettings &settings, int id);
     void setGearRatio(std::vector<double> ratio);
     void setTorque(std::vector<bool> torque);
     void setGoalPos(std::vector<int> goal);
+    void setRotation(std::vector<int> rot);
     bool open(std::string port);
     bool open();
     void start();
@@ -62,7 +76,9 @@ private:
     std::vector<double> jointPresentPosDeg;
     std::vector<int> jointPresentPos;
     std::vector<int> servoIDs;
+    std::vector<int> rotation;
     std::atomic_bool running;
+    std::mutex mutex;
     std::thread thread;
 };
 

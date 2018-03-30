@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
         auto ppos_deg = controller.presentPosDeg();
         w.joint_dialog->setPresentPos(ppos);
         w.joint_dialog->setJointFromController(ppos_deg);
+        qDebug() << "[callback] serial :" << ppos_deg;
     };
 
     w.joint_dialog->connect_serial_cb = [&](std::string port)
@@ -38,6 +39,7 @@ int main(int argc, char *argv[])
     auto gear = w.joint_dialog->gearRatio().toStdVector();
 
     controller.setGearRatio(gear);
+    controller.setRotation(rot);
 
     QObject::connect(w.joint_dialog,&JointSettingsDialog::torqueRequest,[&]
     {
@@ -49,6 +51,32 @@ int main(int argc, char *argv[])
     {
         auto goal_pos = w.joint_dialog->goalPos().toStdVector();
         controller.setGoalPos(goal_pos);
+    });
+
+    QObject::connect(w.joint_dialog,&JointSettingsDialog::eepromReadRequest,[&]{
+        ServoController::EEPROMSettings eeprom[6];
+        for(int i=0; i<6; i++)
+            eeprom[i] = controller.readEEPROM(i+1);
+        for(int i=0; i<6; i++)
+        {
+            w.joint_dialog->showEEPROMSettings(eeprom[i],i);
+            std::cout << "[READ EEPROM] ID : " << i+1 << " " << eeprom[i].str() << std::endl;
+        }
+    });
+
+    QObject::connect(w.joint_dialog,&JointSettingsDialog::eepromWriteRequest,[&]
+    {
+        ServoController::EEPROMSettings eeprom[6];
+        bool valid[6];
+        bool comm[6];
+        for(int i=0; i<6; i++)
+            valid[i] = w.joint_dialog->eepromSettings(i,eeprom[i]);
+        for(int i=0; i<6; i++)
+            if(valid[i])
+                comm[i] = controller.writeEEPROM(eeprom[i],i+1);
+        for(int i=0; i<6; i++)
+            std::cout << "[WRITE EEPROM] ID : " << i+1 << (valid[i] ? " ok " : " !ok ") << eeprom[i].str() << (comm[i] ? " success" : " failed") << std::endl;
+        w.joint_dialog->eepromReadRequest();
     });
 
     controller.start();

@@ -29,7 +29,7 @@
    <item row="0" column="0">
     <widget class="QToolBox" name="toolBox">
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="fk_page">
       <property name="geometry">
@@ -535,7 +535,7 @@ color: rgb(164, 0, 0);</string>
                <number>31</number>
               </property>
               <property name="value">
-               <number>-15</number>
+               <number>0</number>
               </property>
              </widget>
             </item>
@@ -780,7 +780,7 @@ color: rgb(164, 0, 0);</string>
                <number>31</number>
               </property>
               <property name="value">
-               <number>-15</number>
+               <number>0</number>
               </property>
              </widget>
             </item>
@@ -1222,7 +1222,7 @@ color: rgb(164, 0, 0);</string>
              <number>512</number>
             </property>
             <property name="wrapping">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -1235,7 +1235,7 @@ color: rgb(164, 0, 0);</string>
              <number>512</number>
             </property>
             <property name="wrapping">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -1248,7 +1248,7 @@ color: rgb(164, 0, 0);</string>
              <number>512</number>
             </property>
             <property name="wrapping">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -1315,7 +1315,7 @@ color: rgb(164, 0, 0);</string>
              <number>512</number>
             </property>
             <property name="wrapping">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -1328,7 +1328,7 @@ color: rgb(164, 0, 0);</string>
              <number>512</number>
             </property>
             <property name="wrapping">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -1341,7 +1341,7 @@ color: rgb(164, 0, 0);</string>
              <number>512</number>
             </property>
             <property name="wrapping">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>

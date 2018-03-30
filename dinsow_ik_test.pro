@@ -45,7 +45,8 @@ HEADERS  += mainwindow.h \
     meshentity.h \
     dinsowmotion.h \
     servocontroller.h \
-    utility.hpp
+    utility.hpp \
+    servolimit.h
 
 FORMS    += mainwindow.ui \
     jointsettingsdialog.ui

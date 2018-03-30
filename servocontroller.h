@@ -7,6 +7,8 @@
 #include <mutex>
 #include <functional>
 
+#define IK_TEST
+
 class DinsowKinematic;
 
 class ServoController
@@ -21,6 +23,10 @@ public:
         int value;
         int offset;
         bool torque;
+        int low_limit;
+        int high_limit;
+        double speed;
+        uint mov_speed;
         uint8_t servo_value[nbyte];
         uint8_t *operator()();
     };
@@ -40,9 +46,11 @@ public:
 public:
     ServoController(std::__cxx11::string port = std::string("/dev/ttyUSB0"));
     ~ServoController();
+
     std::vector<double> presentPosDeg();
-    std::vector<int> presentPos();
     EEPROMSettings readEEPROM(int id);
+    std::vector<int> presentPos();
+
     bool writeEEPROM(const EEPROMSettings &settings, int id);
     void setGearRatio(std::vector<double> ratio);
     void setTorque(std::vector<bool> torque);
@@ -62,7 +70,8 @@ private:
     bool syncWrite(std::string &str);
     bool syncRead(std::string &str);
     void processPresentPos();
-    void readJoints();
+    void readDinsowJoints();
+    void processJointPos();
     void loop();
 
 private:

@@ -1,5 +1,6 @@
 #include "jointsettingsdialog.h"
 #include "ui_jointsettingsdialog.h"
+#include "servolimit.h"
 #include <QTimer>
 #include <QDebug>
 #include <QHeaderView>
@@ -9,7 +10,7 @@
 #define SERVO_MX64_MAX 4095
 #define SERVO_RX64_MAX 1023
 #define MOTION_TEST
-//#define GEAR1 (0.33333)
+
 #define GEAR1 (1.0)
 #define GEAR2 (1.0)
 #define GEAR3 (1.0)
@@ -276,29 +277,29 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
                 auto value = ui->tableWidget->item(row,i)->data(0).toDouble();
                 frame.push_back(value);
             }
-            if(row>=1)
-            {
-                if(ui->tableWidget->rowCount()>=2)
-                {
-                    QVector<double> frame1;
-                    for(int i=0; i<12; i++)
-                    {
-                        auto value = ui->tableWidget->item(row-1,i)->data(0).toDouble();
-                        frame1.push_back(value);
-                    }
-                    if(!motion_timer->isActive())
-                    {
-                        motion_ik0 = frame1;
-                        motion_ik1 = frame;
-                        time[0] = ui->tableWidget->item(row-1,12)->data(0).toDouble();
-                        time[1] = ui->tableWidget->item(row,12)->data(0).toDouble();
-                        time[2] = time[0];
-                        motion_timer->start(33);
-                    }
-                }
-            }
-            else
-                this->btnIkRequest(frame);
+            //            if(row>=1)
+            //            {
+            //                if(ui->tableWidget->rowCount()>=2)
+            //                {
+            //                    QVector<double> frame1;
+            //                    for(int i=0; i<12; i++)
+            //                    {
+            //                        auto value = ui->tableWidget->item(row-1,i)->data(0).toDouble();
+            //                        frame1.push_back(value);
+            //                    }
+            //                    if(!motion_timer->isActive())
+            //                    {
+            //                        motion_ik0 = frame1;
+            //                        motion_ik1 = frame;
+            //                        time[0] = ui->tableWidget->item(row-1,12)->data(0).toDouble();
+            //                        time[1] = ui->tableWidget->item(row,12)->data(0).toDouble();
+            //                        time[2] = time[0];
+            //                        motion_timer->start(33);
+            //                    }
+            //                }
+            //            }
+            //            else
+            this->btnIkRequest(frame);
         }
     });
 
@@ -311,7 +312,7 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
 
     motion_timer = new QTimer(this);
 
-    connect(motion_timer,SIGNAL(timeout()),this,SLOT(playMotion()));
+    //    connect(motion_timer,SIGNAL(timeout()),this,SLOT(playMotion()));
     auto port_list = QSerialPortInfo::availablePorts();
     for(const QSerialPortInfo& s : port_list)
         ui->serial_comm_cbx->addItem(s.portName());
@@ -360,6 +361,27 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     for(int i=0; i<ui->eeprom_table->rowCount(); i++)
         for(int j=0; j<ui->eeprom_table->columnCount(); j++)
             ui->eeprom_table->setItem(i,j,new QTableWidgetItem(QString("nan")));
+
+    ui->goalpos1_dial->setMinimum(SERVO1_L_LIMIT);
+    ui->goalpos2_dial->setMinimum(SERVO2_L_LIMIT);
+    ui->goalpos3_dial->setMinimum(SERVO3_L_LIMIT);
+    ui->goalpos4_dial->setMinimum(SERVO4_L_LIMIT);
+    ui->goalpos5_dial->setMinimum(SERVO5_L_LIMIT);
+    ui->goalpos6_dial->setMinimum(SERVO6_L_LIMIT);
+
+    ui->goalpos1_dial->setMaximum(SERVO1_H_LIMIT);
+    ui->goalpos2_dial->setMaximum(SERVO2_H_LIMIT);
+    ui->goalpos3_dial->setMaximum(SERVO3_H_LIMIT);
+    ui->goalpos4_dial->setMaximum(SERVO4_H_LIMIT);
+    ui->goalpos5_dial->setMaximum(SERVO5_H_LIMIT);
+    ui->goalpos6_dial->setMaximum(SERVO6_H_LIMIT);
+
+    ui->goalpos1_dial->setValue(2048);
+    ui->goalpos2_dial->setValue(2048);
+    ui->goalpos3_dial->setValue(2048);
+    ui->goalpos4_dial->setValue(2048);
+    ui->goalpos5_dial->setValue(2048);
+    ui->goalpos6_dial->setValue(2048);
 
     setWindowTitle("Joint Settings");
 }

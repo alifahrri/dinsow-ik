@@ -306,8 +306,11 @@ void SceneModifier::dinsowIK(QVector<double> frame)
                                        frame[3],frame[4],frame[5]});
     auto right_pose = DinsowKinematic::Pose({frame[6],frame[7],frame[8],
                                        frame[9],frame[10],frame[11]});
+    auto current_joints = dinsow->joints(DinsowKinematic::LEFT);
     auto left_joints = dinsow->inverseKinematic(left_pose,DinsowKinematic::LEFT);
     auto right_joints = dinsow->inverseKinematic(right_pose,DinsowKinematic::RIGHT);
+    auto speed = dinsow->computeJointSpeed(current_joints,left_joints,1.0);
+    dinsow->setJointSpeed(speed,DinsowKinematic::LEFT);
     QVector<double> qjoints, qhands;
     qjoints.push_back(0.0);
     for(size_t i=0; i<6; i++)

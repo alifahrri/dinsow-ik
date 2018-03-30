@@ -55,6 +55,7 @@ public:
         KDL::ChainIkSolverPos_NR *ikpos_solver;
         KDL::ChainIkSolverPos_NR_JL *ikpos_solver_jl;
         JointValues<n> joint;
+        JointValues<n> joint_speed;
         JointValues<n> lower_limit;
         JointValues<n> upper_limit;
     };
@@ -65,8 +66,11 @@ public:
 public:
     DinsowKinematic();
     Pose forwardKinematic(const ArmJoints &q, ArmSelect_t arm);
-    ArmJoints inverseKinematic(const Pose &p, ArmSelect_t arm, int retry = 10);
+    ArmJoints inverseKinematic(const Pose &p, ArmSelect_t arm, bool apply_joints = true, int retry = 10);
     ArmJoints joints(ArmSelect_t arm);
+    ArmJoints jointSpeed(ArmSelect_t arm);
+    ArmJoints computeJointSpeed(const ArmJoints &j0, const ArmJoints &j1, double time);
+    void setJointSpeed(ArmJoints speed, ArmSelect_t arm);
 
 private:
     Pose forwardKinematic(const ArmJoints &q, DinsowArmChain &chain);

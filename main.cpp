@@ -25,7 +25,9 @@ int main(int argc, char *argv[])
         auto ppos = controller.presentPos();
         auto ppos_deg = controller.presentPosDeg();
         w.joint_dialog->setPresentPos(ppos);
+#if 0
         w.joint_dialog->setJointFromController(ppos_deg);
+#endif
         qDebug() << "[callback] serial :" << ppos_deg;
     };
 
@@ -47,11 +49,14 @@ int main(int argc, char *argv[])
         controller.setTorque(tqs);
     });
 
+#ifndef IK_TEST
     QObject::connect(w.joint_dialog,&JointSettingsDialog::goalPosRequest,[&]
     {
         auto goal_pos = w.joint_dialog->goalPos().toStdVector();
         controller.setGoalPos(goal_pos);
+
     });
+#endif
 
     QObject::connect(w.joint_dialog,&JointSettingsDialog::eepromReadRequest,[&]{
         ServoController::EEPROMSettings eeprom[6];

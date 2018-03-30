@@ -198,12 +198,12 @@ DinsowKinematic::Pose DinsowKinematic::forwardKinematic(const DinsowKinematic::A
     return p;
 }
 
-DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinematic::Pose &p, DinsowKinematic::ArmSelect_t arm, int retry)
+DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinematic::Pose &p, DinsowKinematic::ArmSelect_t arm, bool apply_joints, int retry)
 {
     ArmJoints j;
     DinsowArmChain &chain = (arm == LEFT) ? left_arm : right_arm;
     j = inverseKinematic(p,chain);
-#if 1
+#if 0
     std::vector<int> limits;
     while(!checkLimits(chain,j,limits))
     {
@@ -216,19 +216,63 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
             break;
         retry--;
     }
-#endif
     if(checkLimits(chain,j,limits))
+#endif
         apply(j,chain);
     return j;
 }
 
 DinsowKinematic::ArmJoints DinsowKinematic::joints(DinsowKinematic::ArmSelect_t arm)
 {
+    DinsowKinematic::ArmJoints j;
     switch (arm) {
     case LEFT:
-        return left_arm.joint;
+        j = left_arm.joint;
+        break;
     case  RIGHT:
-        return right_arm.joint;
+        j =  right_arm.joint;
+        break;
+    }
+    return j;
+}
+
+DinsowKinematic::ArmJoints DinsowKinematic::jointSpeed(DinsowKinematic::ArmSelect_t arm)
+{
+    DinsowKinematic::ArmJoints j;
+    switch (arm) {
+    case LEFT:
+        j = left_arm.joint_speed;
+        break;
+    case  RIGHT:
+        j =  right_arm.joint_speed;
+        break;
+    }
+    return j;
+}
+
+DinsowKinematic::ArmJoints DinsowKinematic::computeJointSpeed(const DinsowKinematic::ArmJoints &j0, const DinsowKinematic::ArmJoints &j1, double time)
+{
+    DinsowKinematic::ArmJoints speed;
+    double max_speed = 0.0;
+    for(size_t i=0; i<6; i++)
+    {
+        speed.q[i] = (j1.q[i] - j0.q[i]);
+        max_speed = (fabs(speed.q[i]) > max_speed) ? fabs(speed.q[i]) : max_speed;
+    }
+    for(auto & s : speed.q)
+        s /= max_speed;
+    return speed;
+}
+
+void DinsowKinematic::setJointSpeed(DinsowKinematic::ArmJoints speed, DinsowKinematic::ArmSelect_t arm)
+{
+    switch (arm) {
+    case LEFT:
+        left_arm.joint_speed = speed;
+        break;
+    case  RIGHT:
+        right_arm.joint_speed = speed;
+        break;
     }
 }
 
@@ -251,6 +295,7 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
     KDL::Rotation rot = KDL::Rotation::RPY(p.rx,p.ry,p.rz);
     KDL::Frame in_frame(rot,Vector(p.x,p.y,p.z));
 #else
+    KDL::Rotation rot = KDL::Rotation::RPY(0.0,p.rz,0.0);
     KDL::Frame in_frame(Vector(p.x,p.y,p.z));
 #endif
 #ifdef USE_LMA
@@ -282,10 +327,12 @@ void DinsowKinematic::apply(const DinsowKinematic::ArmJoints &q, DinsowKinematic
     for(int i=0; i<6; i++)
     {
         chain.joint.q[i] = q.q[i];
+#if 0
         if(chain.joint.q[i] < chain.lower_limit.q[i])
             chain.joint.q[i] = chain.lower_limit.q[i];
         else if(chain.joint.q[i] > chain.upper_limit.q[i])
             chain.joint.q[i] = chain.upper_limit.q[i];
+#endif
     }
 }
 

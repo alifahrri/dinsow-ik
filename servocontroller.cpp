@@ -1,6 +1,7 @@
 #include "servocontroller.h"
 #include "utility.hpp"
 #include "dinsowkinematic.h"
+#include "servolimit.h"
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -19,6 +20,9 @@
 #define RX64_CENTER         (512)
 #define MX64_TO_DEG         (0.088)
 #define MX64_CENTER         (2048)
+#define DEFAULT_SPEED1      (128)
+#define DEFAULT_SPEED2      (42)
+#define DEFAULT_ACCEL       (32)
 
 //mx64
 #define ADDR_GOAL_POS       30
@@ -27,6 +31,8 @@
 #define LEN_PRESENT_POS     2
 #define ADDR_TORQUE_EN      24
 #define LEN_TORQUE_EN       1
+#define ADDR_MOV_SPEED      32
+#define ADDR_GOAL_ACCEL     73
 
 #define TORQUE_ENABLE       1
 #define TORQUE_DISABLE      0
@@ -53,12 +59,56 @@ ServoController::ServoController(std::string port)
         if(ss.peek() == ',')
             ss.ignore();
     }
-    jointValues.resize(servoIDs.size(),MX64ServoJoint({0.0,0,0,false}));
-    for(size_t i=0; i<jointValues.size(); i++)
+    jointValues.resize(servoIDs.size(),MX64ServoJoint({0.0,2048,0,false}));
+
+    std::stringstream llimit_ss(std::string(SERVO_L_LIMIT));
+    std::stringstream hlimit_ss(std::string(SERVO_H_LIMIT));
+
+    std::vector<int> low_lim;
+    int l;
+    while(llimit_ss >> l)
     {
-        jointValues.at(i).servo_value[0] = 0;
-        jointValues.at(i).servo_value[1] = 0;
+        low_lim.push_back(l);
+        if(llimit_ss.peek() == ',')
+            llimit_ss.ignore();
     }
+
+    std::vector<int> high_lim;
+    int h;
+    while(hlimit_ss >> h)
+    {
+        high_lim.push_back(h);
+        if(hlimit_ss.peek() == ',')
+            hlimit_ss.ignore();
+    }
+
+    for(size_t i=0; i<std::min(jointValues.size(),std::min(low_lim.size(),high_lim.size())); i++)
+    {
+        jointValues.at(i).low_limit = low_lim.at(i);
+        jointValues.at(i).high_limit = high_lim.at(i);
+        jointValues.at(i).speed = 1.0;
+        std::cout << "[ServoController] ID :" << servoIDs.at(i)
+                  << " Limit ("
+                  << jointValues.at(i).low_limit
+                  << ","
+                  << jointValues.at(i).high_limit
+                  << ")\n";
+        jointValues.at(i).value = 0;
+        std::cout << "[TEST] : " << jointValues.at(i).value << "; ";
+        jointValues.at(i)();
+        std::cout << "jointValue() : " << jointValues.at(i).value << std::endl;
+
+        jointValues.at(i).value = 4095;
+        std::cout << "[TEST] : " << jointValues.at(i).value << "; ";
+        jointValues.at(i)();
+        std::cout << "jointValue() : " << jointValues.at(i).value << std::endl;
+
+        jointValues.at(i).value = 2048;
+        std::cout << "[TEST] : " << jointValues.at(i).value << "; ";
+        jointValues.at(i)();
+        std::cout << "jointValue() : " << jointValues.at(i).value << std::endl;
+    }
+
     for(size_t i=0; i<servoIDs.size(); i++)
         syncReader.addParam(servoIDs[i]);
     portHandler->setBaudRate(BAUD_RATE);
@@ -275,16 +325,20 @@ void ServoController::loop()
     {
         utility::timer timer;
         std::string read_str, write_str;
-#ifndef CONTROLLER_TEST
-        readJoints();
-#endif
+
         mutex.lock();
         syncRead(read_str);
         syncWrite(write_str);
         mutex.unlock();
+
 #ifdef DEBUG
         std::cout << read_str;
         std::cout << write_str;
+#endif
+
+#if 1
+        readDinsowJoints();
+        processJointPos();
 #endif
         if(serial_cb)
             serial_cb();
@@ -292,20 +346,24 @@ void ServoController::loop()
     }
 }
 
-void ServoController::readJoints()
+void ServoController::readDinsowJoints()
 {
-#if 1
+#if 0
     std::cout << "[ReadJoints] \n";
 #endif
     if(!dinsow)
         return;
     auto l_joints = dinsow->joints(DinsowKinematic::LEFT);
-    auto r_joints = dinsow->joints(DinsowKinematic::RIGHT);
+    auto l_speed = dinsow->jointSpeed(DinsowKinematic::LEFT);
+    //    auto r_joints = dinsow->joints(DinsowKinematic::RIGHT);
     for(size_t i=0; i<6; i++)
     {
+        std::cout << "[ReadJoints] joint[" << i << "] : "
+                  << l_joints.q[i] << '\n';
         jointValues.at(i).joint = l_joints.q[i];
-        jointValues.at(i)();
-#if 1
+        jointValues.at(i).speed = l_speed.q[i];
+//        jointValues.at(i)();
+#if 0
         static auto servo2str = [](const MX64ServoJoint &servo)->std::string
         {
             std::stringstream ss;
@@ -392,6 +450,21 @@ void ServoController::processPresentPos()
     }
 }
 
+void ServoController::processJointPos()
+{
+    for(size_t i=0; i<jointValues.size(); i++)
+    {
+        int pos = (jointValues.at(i).joint*TO_DEGREE) / (rotation.at(i)*MX64_TO_DEG) + MX64_CENTER;
+        jointValues.at(i).value = pos;
+        jointValues.at(i).mov_speed = (i==0 ? (uint)(fabs(jointValues[i].speed) * DEFAULT_SPEED1) :
+                                              (uint)(fabs(jointValues[i].speed) * DEFAULT_SPEED2));
+        jointValues.at(i)();
+        std::cout << "[ServoController] "
+                  << "joint[" << servoIDs.at(i) << "] : " << jointValues.at(i).joint << "; "
+                  << "pos : "<< pos << std::endl;
+    }
+}
+
 bool ServoController::syncWrite(std::__cxx11::string &str)
 {
     bool ret = true;
@@ -403,10 +476,22 @@ bool ServoController::syncWrite(std::__cxx11::string &str)
         uint8_t torque_data = jointValues[i].torque ? TORQUE_ENABLE : TORQUE_DISABLE;
         syncTorqueWriter.addParam(servoIDs[i],&torque_data);
         if(jointValues[i].torque)
+        {
+//            uint16_t data = (i==0 ? (uint)(jointValues[i].speed * DEFAULT_SPEED1) :
+//                                    (uint)(jointValues[i].speed * DEFAULT_SPEED2));
+            uint16_t data = jointValues[i].mov_speed;
             syncWriter.addParam(servoIDs[i],jointValues[i]());
+            int dxl_speed_comm_result = packetHandler->write2ByteTxRx(portHandler,servoIDs.at(i),ADDR_MOV_SPEED,data);
+            if(i>0)
+            {
+                uint8_t data = DEFAULT_ACCEL;
+                int dxl_accel_comm_result = packetHandler->write1ByteTxRx(portHandler,servoIDs.at(i),ADDR_GOAL_ACCEL,data);
+            }
+        }
     }
 
     ss << "[syncWrite]=========================\n";
+
 
     int dxl_torque_comm_result = syncTorqueWriter.txPacket();
     if(dxl_torque_comm_result != COMM_SUCCESS)
@@ -436,10 +521,14 @@ uint8_t *ServoController::ServoJointValue<nbyte>::operator()()
 #ifndef CONTROLLER_TEST
     value = (int)(joint*TO_MX64_RAD+offset);
 #endif
+    value = std::min(value,high_limit);
+    value = std::max(value,low_limit);
     for(size_t i=0; i<nbyte; i++)
     {
         servo_value[i] = (uint8_t)((value>>(i*8)&0xFF));
+#if 0
         std::cout << "[ServoController] servo[" << i << "] : " << (size_t)(servo_value[i]) << '\n';
+#endif
     }
     return servo_value;
 }

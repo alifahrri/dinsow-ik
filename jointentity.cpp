@@ -1,6 +1,6 @@
 #include "jointentity.h"
 
-JointEntity::JointEntity(Qt3DCore::QEntity *root, double radius)
+JointEntity::JointEntity(Qt3DCore::QEntity *root, double alpha, double radius)
 {
     mesh = new Qt3DExtras::QSphereMesh();
     mesh->setRadius(radius);
@@ -9,7 +9,7 @@ JointEntity::JointEntity(Qt3DCore::QEntity *root, double radius)
     transform->setTranslation(QVector3D(0.0f,0.0f,0.0f));
 
     material = new Qt3DExtras::QPhongAlphaMaterial();
-    material->setAlpha(0.1);
+    material->setAlpha(alpha);
     material->setDiffuse(QColor(Qt::red));
     material->setShininess(1.0);
 

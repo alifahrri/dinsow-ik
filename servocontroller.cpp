@@ -20,9 +20,10 @@
 #define RX64_CENTER         (512)
 #define MX64_TO_DEG         (0.088)
 #define MX64_CENTER         (2048)
-#define DEFAULT_SPEED1      (128)
-#define DEFAULT_SPEED2      (42)
-#define DEFAULT_ACCEL       (32)
+#define DEFAULT_SPEED1      (24)
+#define DEFAULT_SPEED2      (16)
+#define MAX_SPEED           (16)
+#define DEFAULT_ACCEL       (1)
 
 //mx64
 #define ADDR_GOAL_POS       30
@@ -42,6 +43,13 @@
 #define ADDR_MAX_TORQUE     (14)
 #define ADDR_TURN_OFFSET    (20)
 #define ADDR_RES_DIVIDER    (22)
+
+#define ROT1 (1)
+#define ROT2 (-1)
+#define ROT3 (1)
+#define ROT4 (1)
+#define ROT5 (1)
+#define ROT6 (1)
 
 ServoController::ServoController(std::string port)
     : portHandler(dynamixel::PortHandler::getPortHandler(port.c_str())),
@@ -336,13 +344,13 @@ void ServoController::loop()
         std::cout << write_str;
 #endif
 
-#if 1
+#ifdef IK_TEST
         readDinsowJoints();
         processJointPos();
 #endif
         if(serial_cb)
             serial_cb();
-        timer.sleep(33.0);
+        timer.sleep(100.0);
     }
 }
 
@@ -480,7 +488,23 @@ bool ServoController::syncWrite(std::__cxx11::string &str)
 //            uint16_t data = (i==0 ? (uint)(jointValues[i].speed * DEFAULT_SPEED1) :
 //                                    (uint)(jointValues[i].speed * DEFAULT_SPEED2));
             uint16_t data = jointValues[i].mov_speed;
+//            data = std::min(data,(uint16_t(MAX_SPEED)));
+            if(i==0)
+              data = DEFAULT_SPEED1;
+            else
+              data = DEFAULT_SPEED2;
+//            if(i==3)
+//              {
+////                auto v = jointValues[i].value;
+//                std::cout << "Joint[" << i << "] : " << jointValues[i].value << std::flush;
+////                jointValues[i].value = 2048+2048-v;
+//                syncWriter.addParam(servoIDs[i],jointValues[i]());
+////                jointValues[i].value = v;
+//              }
+//            else
             syncWriter.addParam(servoIDs[i],jointValues[i]());
+            std::cout << "Joint[" << i << "] : "
+                      << jointValues[i].value << " " << std::flush;
             int dxl_speed_comm_result = packetHandler->write2ByteTxRx(portHandler,servoIDs.at(i),ADDR_MOV_SPEED,data);
             if(i>0)
             {
@@ -526,6 +550,7 @@ uint8_t *ServoController::ServoJointValue<nbyte>::operator()()
     for(size_t i=0; i<nbyte; i++)
     {
         servo_value[i] = (uint8_t)((value>>(i*8)&0xFF));
+
 #if 0
         std::cout << "[ServoController] servo[" << i << "] : " << (size_t)(servo_value[i]) << '\n';
 #endif

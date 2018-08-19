@@ -3,7 +3,11 @@
 #include "dinsowkinematic.h"
 #include "dinsowmotion.h"
 #include "servocontroller.h"
+#include "scenemodifier.h"
+#include "client.h"
 #include <iostream>
+
+#define PORT_TARGET 55284
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +21,8 @@ int main(int argc, char *argv[])
     controller.dinsow = &dinsow_kinematic;
 
     MainWindow w;
+    TargetClient target_client(PORT_TARGET, &w);
+
     w.getWidget3D()->passDinsow(&dinsow_kinematic,&dinsow_motion);
     w.showMaximized();
 
@@ -25,6 +31,7 @@ int main(int argc, char *argv[])
         auto ppos = controller.presentPos();
         auto ppos_deg = controller.presentPosDeg();
         w.joint_dialog->setPresentPos(ppos);
+//        dinsow_kinematic.setJoints();
 #if 0
         w.joint_dialog->setJointFromController(ppos_deg);
 #endif
@@ -49,14 +56,18 @@ int main(int argc, char *argv[])
         controller.setTorque(tqs);
     });
 
-#ifndef IK_TEST
+#if 0
     QObject::connect(w.joint_dialog,&JointSettingsDialog::goalPosRequest,[&]
     {
         auto goal_pos = w.joint_dialog->goalPos().toStdVector();
         controller.setGoalPos(goal_pos);
-
     });
 #endif
+
+    QObject::connect(&target_client, &TargetClient::ikRequest, [&](double x, double y, double z)
+    {
+      w.widget3d->modifier->setTarget(x,y,z);
+    });
 
     QObject::connect(w.joint_dialog,&JointSettingsDialog::eepromReadRequest,[&]{
         ServoController::EEPROMSettings eeprom[6];

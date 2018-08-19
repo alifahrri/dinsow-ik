@@ -8,12 +8,13 @@
 class JointEntity : public Qt3DCore::QEntity
 {
 public:
-    JointEntity(Qt3DCore::QEntity *root, double radius = 0.15);
+    JointEntity(Qt3DCore::QEntity *root, double alpha = 0.1, double radius = 0.15);
 public:
     Qt3DCore::QTransform *transform;
 private:
     Qt3DExtras::QSphereMesh *mesh;
     Qt3DExtras::QPhongAlphaMaterial *material;
+    //    Qt3DRender::QMaterial *material;
 };
 
 #endif // JOINTENTITY_H

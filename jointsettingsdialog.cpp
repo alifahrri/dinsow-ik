@@ -1,10 +1,12 @@
 #include "jointsettingsdialog.h"
 #include "ui_jointsettingsdialog.h"
 #include "servolimit.h"
+#include <QFileDialog>
 #include <QTimer>
 #include <QDebug>
 #include <QHeaderView>
 #include <sstream>
+#include <fstream>
 
 #define SERVO_MX64
 #define SERVO_MX64_MAX 4095
@@ -19,10 +21,10 @@
 #define GEAR6 (1.0)
 #define ROT1 (1)
 #define ROT2 (-1)
-#define ROT3 (-1)
-#define ROT4 (-1)
-#define ROT5 (-1)
-#define ROT6 (-1)
+#define ROT3 (1)
+#define ROT4 (1)
+#define ROT5 (1)
+#define ROT6 (1)
 
 JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -361,6 +363,22 @@ JointSettingsDialog::JointSettingsDialog(QWidget *parent) :
     for(int i=0; i<ui->eeprom_table->rowCount(); i++)
         for(int j=0; j<ui->eeprom_table->columnCount(); j++)
             ui->eeprom_table->setItem(i,j,new QTableWidgetItem(QString("nan")));
+
+    connect(ui->load_btn,&QPushButton::clicked,[=]
+    {
+        auto file = QFileDialog::getOpenFileName(this,QString("File Dialog"),QString("~/"));
+        std::ifstream motion_file(file.toStdString());
+        std::string string;
+        while(std::getline(motion_file,string))
+        {
+            std::stringstream ss(string);
+            int i;
+            while(ss >> i)
+            {
+
+            }
+        }
+    });
 
     ui->goalpos1_dial->setMinimum(SERVO1_L_LIMIT);
     ui->goalpos2_dial->setMinimum(SERVO2_L_LIMIT);

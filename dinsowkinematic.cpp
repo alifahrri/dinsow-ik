@@ -222,6 +222,11 @@ DinsowKinematic::ArmJoints DinsowKinematic::inverseKinematic(const DinsowKinemat
     return j;
 }
 
+void DinsowKinematic::setJoints(DinsowKinematic::ArmSelect_t select, const DinsowKinematic::ArmJoints &arm)
+{
+  apply(arm, (select == LEFT ? this->left_arm : this->right_arm));
+}
+
 DinsowKinematic::ArmJoints DinsowKinematic::joints(DinsowKinematic::ArmSelect_t arm)
 {
     DinsowKinematic::ArmJoints j;

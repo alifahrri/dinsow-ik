@@ -4,10 +4,11 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 QT += 3dcore 3drender 3dinput 3dlogic 3dextras serialport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+#CONFIG += console
 TARGET = dinsow_ik_test
 TEMPLATE = app
 
@@ -22,6 +23,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+LIBS += -L/usr/local/lib -lprotobuf
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -33,7 +35,9 @@ SOURCES += main.cpp\
     dinsowkinematic.cpp \
     meshentity.cpp \
     dinsowmotion.cpp \
-    servocontroller.cpp
+    servocontroller.cpp \
+    client.cpp \
+    message.pb.cc
 
 HEADERS  += mainwindow.h \
     widget3d.h \
@@ -46,7 +50,9 @@ HEADERS  += mainwindow.h \
     dinsowmotion.h \
     servocontroller.h \
     utility.hpp \
-    servolimit.h
+    servolimit.h \
+    client.h \
+    message.pb.h
 
 FORMS    += mainwindow.ui \
     jointsettingsdialog.ui
@@ -57,3 +63,8 @@ RESOURCES += \
     dinsowbody.qrc
 
 INCLUDEPATH += /usr/include/eigen3
+
+#QMAKE_CXXFLAGS_RELEASE -= -O1
+#QMAKE_CXXFLAGS_RELEASE -= -O2
+#QMAKE_CXXFLAGS_RELEASE += -O3
+

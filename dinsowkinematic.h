@@ -67,6 +67,7 @@ public:
     DinsowKinematic();
     Pose forwardKinematic(const ArmJoints &q, ArmSelect_t arm);
     ArmJoints inverseKinematic(const Pose &p, ArmSelect_t arm, bool apply_joints = true, int retry = 10);
+    void setJoints(ArmSelect_t select, const ArmJoints &arm);
     ArmJoints joints(ArmSelect_t arm);
     ArmJoints jointSpeed(ArmSelect_t arm);
     ArmJoints computeJointSpeed(const ArmJoints &j0, const ArmJoints &j1, double time);

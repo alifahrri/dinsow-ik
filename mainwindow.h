@@ -20,10 +20,10 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    Widget3D *widget3d;
 
 public:
     JointSettingsDialog *joint_dialog;
+    Widget3D *widget3d;
 };
 
 #endif // MAINWINDOW_H
